@@ -30,7 +30,7 @@ pip install it2
 ### Using uvx (recommended)
 
 ```bash
-uvx iterm2-cli
+uvx it2
 ```
 
 ## Quick Start
@@ -274,8 +274,8 @@ it2 monitor output -f -p "ERROR|FAILED"
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/iterm2-cli.git
-cd iterm2-cli
+git clone https://github.com/mkusaka/it2.git
+cd it2
 
 # Create virtual environment
 python -m venv venv
