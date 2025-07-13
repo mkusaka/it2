@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling==1.25.0"]
+build-backend = "hatchling.build"
 
 [project]
 name = "iterm2-cli"
 version = "0.1.0"
 description = "A powerful command-line interface for controlling iTerm2"
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 authors = [
     { name = "Your Name", email = "your.email@example.com" }
 ]
@@ -30,6 +30,19 @@ dependencies = [
     "PyYAML>=6.0",
     "rich>=10.0",
 ]
+keywords = [
+    "iterm2",
+    "terminal",
+    "cli",
+    "automation",
+    "macos",
+]
+
+[project.urls]
+Homepage = "https://github.com/mkusaka/it2"
+"Bug Tracker" = "https://github.com/mkusaka/it2/issues"
+Documentation = "https://github.com/mkusaka/it2#readme"
+"Source Code" = "https://github.com/mkusaka/it2"
 
 [project.scripts]
 it2 = "it2.cli:main"
@@ -84,3 +97,16 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/it2"]
+core-metadata-version = "2.2"
+
+[tool.hatch.build.targets.sdist]
+core-metadata-version = "2.2"
+
+[tool.hatch.metadata]
+allow-direct-references = true
