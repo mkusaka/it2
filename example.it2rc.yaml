@@ -1,0 +1,60 @@
+# Example iTerm2 CLI configuration file
+# Copy this to ~/.it2rc.yaml and customize as needed
+
+# Custom profiles for development environments
+profiles:
+  # Development environment with split panes
+  dev:
+    - command: cd ~/project
+    - split: vertical
+    - pane1: npm run dev
+    - pane2: npm test --watch
+  
+  # Multi-server SSH setup
+  servers:
+    - split: 2x2
+    - pane1: ssh server1
+    - pane2: ssh server2
+    - pane3: ssh server3
+    - pane4: ssh server4
+  
+  # Database monitoring setup
+  db-monitor:
+    - command: cd ~/project
+    - split: horizontal
+    - pane1: mysql -u root -p
+    - pane2: tail -f /var/log/mysql/error.log
+  
+  # Git workflow
+  git-flow:
+    - split: vertical
+    - pane1: git status
+    - split: horizontal
+    - pane2: git log --oneline --graph --all
+    - pane3: watch -n 5 git status
+
+# Command aliases for quick actions
+aliases:
+  # Deployment commands
+  deploy: session run "deploy.sh" --all
+  deploy-prod: session run "deploy.sh production" --all
+  
+  # Log monitoring
+  logs: session run "tail -f /var/log/app.log"
+  errors: monitor output -f -p "ERROR|WARN"
+  
+  # Development shortcuts
+  dev-setup: load dev
+  server-setup: load servers
+  
+  # Quick actions
+  reload: session run "source ~/.zshrc" --all
+  update: session run "git pull && npm install"
+  
+  # Broadcast shortcuts
+  bc-on: app broadcast on
+  bc-off: app broadcast off
+  
+  # Window management
+  fullscreen: window fullscreen toggle
+  new-dev: window new --profile "Development"

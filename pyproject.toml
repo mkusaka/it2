@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iterm2-cli"
+version = "0.1.0"
+description = "A powerful command-line interface for controlling iTerm2"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Your Name", email = "your.email@example.com" }
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: MacOS :: MacOS X",
+]
+dependencies = [
+    "iterm2>=2.7",
+    "click>=8.0",
+    "PyYAML>=6.0",
+    "rich>=10.0",
+]
+
+[project.scripts]
+it2 = "it2.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.20",
+    "pytest-cov>=4.0",
+    "black>=22.0",
+    "ruff>=0.0.240",
+    "mypy>=1.0",
+    "types-PyYAML>=6.0",
+    "twine>=5.0.0",
+    "build>=1.0.0",
+]
+
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "S", "B", "A", "C4", "PIE", "PT", "RET", "SIM", "TID"]
+ignore = [
+    "E501",     # line too long
+    "S101",     # use of assert (allowed in tests)
+    "TID252",   # relative imports (we use relative imports within package)
+    "FBT001",   # boolean positional arg in function definition
+    "FBT002",   # boolean default value in function definition
+    "UP007",    # use Optional[X] instead of Union[X, None] (we prefer Union syntax)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["S101"]  # assert is allowed in tests
+"scripts/*.py" = ["S603"]  # subprocess is allowed in scripts
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "iterm2.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
