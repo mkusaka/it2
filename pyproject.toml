@@ -58,7 +58,7 @@ dev = [
     "ruff>=0.0.240",
     "mypy>=1.0",
     "types-PyYAML>=6.0",
-    "twine>=5.0.0",
+    "twine==6.0.1",  # Pin to 6.0.1 to avoid license-file validation issues
     "build>=1.0.0",
 ]
 
@@ -102,7 +102,6 @@ testpaths = ["tests"]
 
 [tool.hatch.build]
 sources = ["src"]
-license-files = ["LICENSE"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/it2"]
