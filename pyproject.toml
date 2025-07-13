@@ -7,7 +7,7 @@ name = "it2"
 version = "0.1.4"
 description = "A powerful command-line interface for controlling iTerm2"
 readme = "README.md"
-license = "MIT"
+license = {file = "LICENSE"}
 authors = [
     { name = "Your Name", email = "your.email@example.com" }
 ]
