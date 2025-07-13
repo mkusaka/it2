@@ -26,19 +26,11 @@ jobs:
       
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          make install
       
-      - name: Run ruff
+      - name: Run code quality checks
         run: |
-          uv run ruff check .
-      
-      - name: Run black
-        run: |
-          uv run black --check .
-      
-      - name: Run mypy
-        run: |
-          uv run mypy src
+          make lint mypy format-check
 
   test:
     name: Test Python ${{ matrix.python-version }}
@@ -66,7 +58,7 @@ jobs:
       
       - name: Run tests
         run: |
-          uv run pytest --cov=it2 --cov-report=term
+          make test-cov
 
   build:
     name: Build Distribution
@@ -85,16 +77,16 @@ jobs:
       
       - name: Install dependencies
         run: |
-          uv sync --all-extras --dev
+          make install
       
       - name: Build package
         run: |
-          uv build
+          make build
       
       - name: Check distribution
         run: |
           ls -la dist/
-          uv run twine check dist/*
+          make check-dist
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
