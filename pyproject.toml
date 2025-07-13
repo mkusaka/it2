@@ -54,6 +54,7 @@ dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.20",
     "pytest-cov>=4.0",
+    "pytest-timeout>=2.1",
     "black>=22.0",
     "ruff>=0.0.240",
     "mypy>=1.0",
@@ -97,8 +98,9 @@ module = "iterm2.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["tests"]
+timeout = 60
+addopts = "-v"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/it2"]
@@ -114,5 +116,6 @@ allow-direct-references = true
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
+    "pytest-timeout>=2.4.0",
 ]
 
