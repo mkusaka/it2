@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "it2"
-version = "0.1.3"
+version = "0.1.4"
 description = "A powerful command-line interface for controlling iTerm2"
 readme = "README.md"
 license = "MIT"
@@ -100,15 +100,13 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
-[tool.hatch.build]
-sources = ["src"]
-
 [tool.hatch.build.targets.wheel]
 packages = ["src/it2"]
-core-metadata-version = "2.2"
 
 [tool.hatch.build.targets.sdist]
-core-metadata-version = "2.2"
+include = [
+    "/src",
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
