@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from it2.cli import cli
 
 
-def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app):
+def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app):
     """Helper to set up common mocks for tests."""
 
     # Set up environment - return None for completion vars, but cookie for iTerm2
@@ -25,7 +25,12 @@ def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, moc
 
     mock_env_get.side_effect = env_side_effect
 
-    # Set up connection manager
+    # Mock the new external connection path
+    mock_connection = MagicMock()
+    mock_async_create.return_value = mock_connection
+    mock_async_get_app.return_value = mock_app
+
+    # Set up connection manager (legacy)
     mock_conn_mgr.connect = AsyncMock()
     mock_conn_mgr.get_app = AsyncMock(return_value=mock_app)
     mock_conn_mgr.close = AsyncMock()
@@ -89,24 +94,28 @@ def mock_app(mock_session):
     return app
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_send(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session send command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "send", "Hello, World!"])
     assert result.exit_code == 0
     mock_session.async_send_text.assert_called_once_with("Hello, World!")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_session_send_all(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_session_send_all(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test session send to all sessions."""
     # Create multiple sessions
     session1 = MagicMock()
@@ -119,7 +128,7 @@ def test_session_send_all(mock_conn_mgr, mock_env_get, mock_run_until_complete, 
     window = MagicMock(tabs=[tab1, tab2])
     mock_app.windows = [window]
 
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "send", "Hello!", "--all"])
     assert result.exit_code == 0
@@ -128,28 +137,32 @@ def test_session_send_all(mock_conn_mgr, mock_env_get, mock_run_until_complete, 
     session2.async_send_text.assert_called_once_with("Hello!")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_run(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session run command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "run", "ls -la"])
     assert result.exit_code == 0
     mock_session.async_send_text.assert_called_once_with("ls -la\r")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_list(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session list command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock session info - return default values for any missing keys
     def get_var(var):
@@ -171,14 +184,16 @@ def test_session_list(
     pytest.skip("Skipping due to terminal output issues in test environment")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_list_json(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session list command with JSON output."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock session info
     mock_session.async_get_variable = AsyncMock(
@@ -203,14 +218,16 @@ def test_session_list_json(
     assert data[0]["name"] == "Test Session"
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_split(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session split command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     new_session = MagicMock(session_id="new-session-456")
     mock_session.async_split_pane = AsyncMock(return_value=new_session)
@@ -221,14 +238,16 @@ def test_session_split(
     mock_session.async_split_pane.assert_called_once_with(vertical=False, profile=None)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_split_vertical(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session split vertical command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     new_session = MagicMock(session_id="new-session-456")
     mock_session.async_split_pane = AsyncMock(return_value=new_session)
@@ -239,14 +258,16 @@ def test_session_split_vertical(
     mock_session.async_split_pane.assert_called_once_with(vertical=True, profile=None)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_close(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session close command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "close", "--force"])
     assert result.exit_code == 0
@@ -254,14 +275,16 @@ def test_session_close(
     mock_session.async_close.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_restart(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session restart command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "restart"])
     assert result.exit_code == 0
@@ -269,14 +292,16 @@ def test_session_restart(
     mock_session.async_restart.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_focus(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session focus command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "focus", "test-session-123"])
     assert result.exit_code == 0
@@ -284,28 +309,32 @@ def test_session_focus(
     mock_session.async_activate.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_clear(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session clear command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "clear"])
     assert result.exit_code == 0
     mock_session.async_send_text.assert_called_once_with("\x0c")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_set_name(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session set-name command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "set-name", "MySession"])
     assert result.exit_code == 0
@@ -313,14 +342,16 @@ def test_session_set_name(
     mock_session.async_set_name.assert_called_once_with("MySession")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_get_var(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session get-var command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     mock_session.async_get_variable = AsyncMock(return_value="test-value")
 
@@ -330,14 +361,16 @@ def test_session_get_var(
     mock_session.async_get_variable.assert_called_once_with("test.var")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_set_var(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session set-var command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["session", "set-var", "test.var", "new-value"])
     assert result.exit_code == 0
@@ -345,14 +378,16 @@ def test_session_set_var(
     mock_session.async_set_variable.assert_called_once_with("test.var", "new-value")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_read(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session
 ):
     """Test session read command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock screen contents
     contents = MagicMock()
@@ -365,6 +400,8 @@ def test_session_read(
 
 
 @patch("subprocess.run")
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
@@ -372,13 +409,15 @@ def test_session_copy(
     mock_conn_mgr,
     mock_env_get,
     mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
     mock_subprocess,
     runner,
     mock_app,
     mock_session,
 ):
     """Test session copy command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock selection
     selection = MagicMock()
@@ -391,14 +430,16 @@ def test_session_copy(
     mock_subprocess.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_session_capture(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_session, tmp_path
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_session, tmp_path
 ):
     """Test session capture command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock screen contents
     contents = MagicMock()
@@ -415,6 +456,7 @@ def test_session_capture(
 def test_session_send_error_no_cookie(runner):
     """Test session send command without iTerm2 cookie."""
     with patch("os.environ.get", return_value=None):
-        result = runner.invoke(cli, ["session", "send", "Hello"])
-        assert result.exit_code == 2
-        assert "Not running inside iTerm2" in result.output
+        with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+            result = runner.invoke(cli, ["session", "send", "Hello"])
+            assert result.exit_code == 2
+            assert "Not running inside iTerm2" in result.output

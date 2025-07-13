@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from it2.cli import cli
 
 
-def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app):
+def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app):
     """Helper to set up common mocks for tests."""
 
     # Set up environment - return None for completion vars, but cookie for iTerm2
@@ -25,7 +25,12 @@ def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, moc
 
     mock_env_get.side_effect = env_side_effect
 
-    # Set up connection manager
+    # Mock the new external connection path
+    mock_connection = MagicMock()
+    mock_async_create.return_value = mock_connection
+    mock_async_get_app.return_value = mock_app
+
+    # Set up connection manager (legacy)
     mock_conn_mgr.connect = AsyncMock()
     mock_conn_mgr.get_app = AsyncMock(return_value=mock_app)
     mock_conn_mgr.close = AsyncMock()
@@ -94,12 +99,14 @@ def mock_app(mock_window):
 
 
 # Test Tab Creation
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_new(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab):
+def test_tab_new(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab):
     """Test tab new command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "new"])
     assert result.exit_code == 0
@@ -107,14 +114,16 @@ def test_tab_new(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, m
     mock_app.current_terminal_window.async_create_tab.assert_called_once_with(profile=None)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_new_with_profile(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab new command with profile."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "new", "--profile", "MyProfile"])
     assert result.exit_code == 0
@@ -122,14 +131,16 @@ def test_tab_new_with_profile(
     mock_app.current_terminal_window.async_create_tab.assert_called_once_with(profile="MyProfile")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_new_with_command(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab new command with command to run."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "new", "--command", "ls -la"])
     assert result.exit_code == 0
@@ -137,14 +148,16 @@ def test_tab_new_with_command(
     mock_tab.current_session.async_send_text.assert_called_once_with("ls -la\r")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_new_with_specific_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test tab new command in specific window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "new", "--window", "test-window-789"])
     assert result.exit_code == 0
@@ -152,28 +165,32 @@ def test_tab_new_with_specific_window(
     mock_window.async_create_tab.assert_called_once_with(profile=None)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_new_window_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab new command with non-existent window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "new", "--window", "non-existent-window"])
     assert result.exit_code == 3
     assert "Window 'non-existent-window' not found" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_new_no_current_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab new command when no current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window = None
 
     result = runner.invoke(cli, ["tab", "new"])
@@ -181,12 +198,14 @@ def test_tab_new_no_current_window(
     assert "No current window" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_tab_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test tab new command when creation fails."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window.async_create_tab.return_value = None
 
     result = runner.invoke(cli, ["tab", "new"])
@@ -195,23 +214,27 @@ def test_tab_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete, r
 
 
 # Test Tab Listing
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_list(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_tab_list(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test tab list command."""
     # Skip this test - Rich console output formatting
     pytest.skip("Rich console table formatting")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_list_json(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab list command with JSON output."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "list", "--json"])
     assert result.exit_code == 0
@@ -225,14 +248,16 @@ def test_tab_list_json(
     assert data[0]["is_active"] is True
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_list_specific_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab list command for specific window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "list", "--window", "test-window-789", "--json"])
     assert result.exit_code == 0
@@ -242,14 +267,16 @@ def test_tab_list_specific_window(
     assert data[0]["window_id"] == "test-window-789"
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_list_window_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab list command with non-existent window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "list", "--window", "non-existent", "--json"])
     assert result.exit_code == 3
@@ -257,14 +284,16 @@ def test_tab_list_window_not_found(
 
 
 # Test Tab Close
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_close_current(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab close command for current tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "close", "--force"])
     assert result.exit_code == 0
@@ -272,14 +301,16 @@ def test_tab_close_current(
     mock_tab.async_close.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_close_specific(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab close command for specific tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "close", "test-tab-456", "--force"])
     assert result.exit_code == 0
@@ -287,28 +318,32 @@ def test_tab_close_specific(
     mock_tab.async_close.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_close_tab_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab close command with non-existent tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "close", "non-existent", "--force"])
     assert result.exit_code == 3
     assert "Tab 'non-existent' not found" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_close_no_current_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab close command when no current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window = None
 
     result = runner.invoke(cli, ["tab", "close", "--force"])
@@ -316,14 +351,16 @@ def test_tab_close_no_current_window(
     assert "No current window" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_close_no_current_tab(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test tab close command when no current tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_window.current_tab = None
 
     result = runner.invoke(cli, ["tab", "close", "--force"])
@@ -332,14 +369,16 @@ def test_tab_close_no_current_tab(
 
 
 # Test Tab Select
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_select_by_id(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab select command by ID."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "select", "test-tab-456"])
     assert result.exit_code == 0
@@ -347,14 +386,16 @@ def test_tab_select_by_id(
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_select_by_index(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab select command by index."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "select", "0"])
     assert result.exit_code == 0
@@ -362,14 +403,16 @@ def test_tab_select_by_index(
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_select_by_index_with_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab select command by index with specific window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "select", "0", "--window", "test-window-789"])
     assert result.exit_code == 0
@@ -377,28 +420,32 @@ def test_tab_select_by_index_with_window(
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_select_index_out_of_range(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab select command with out of range index."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "select", "5"])
     assert result.exit_code == 4
     assert "Tab index 5 out of range" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_select_tab_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab select command with non-existent tab ID."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "select", "non-existent"])
     assert result.exit_code == 3
@@ -406,14 +453,16 @@ def test_tab_select_tab_not_found(
 
 
 # Test Tab Move
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_move_current(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab move command for current tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "move", "2"])
     assert result.exit_code == 0
@@ -421,14 +470,16 @@ def test_tab_move_current(
     mock_tab.async_move_to_window_index.assert_called_once_with(2)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_move_specific(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab move command for specific tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "move", "1", "test-tab-456"])
     assert result.exit_code == 0
@@ -436,28 +487,32 @@ def test_tab_move_specific(
     mock_tab.async_move_to_window_index.assert_called_once_with(1)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_move_tab_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab move command with non-existent tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "move", "1", "non-existent"])
     assert result.exit_code == 3
     assert "Tab 'non-existent' not found" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_move_no_current_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab move command when no current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window = None
 
     result = runner.invoke(cli, ["tab", "move", "1"])
@@ -466,12 +521,14 @@ def test_tab_move_no_current_window(
 
 
 # Test Tab Next
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_next(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab):
+def test_tab_next(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab):
     """Test tab next command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Create second tab
     tab2 = MagicMock()
@@ -489,14 +546,16 @@ def test_tab_next(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, 
     tab2.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_next_wrap_around(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab next command wraps around to first tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Set current tab as last tab
     mock_app.current_terminal_window.tabs.index.return_value = 0
@@ -507,14 +566,16 @@ def test_tab_next_wrap_around(
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_next_no_current_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab next command when no current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window = None
 
     result = runner.invoke(cli, ["tab", "next"])
@@ -523,12 +584,14 @@ def test_tab_next_no_current_window(
 
 
 # Test Tab Previous
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_prev(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab):
+def test_tab_prev(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab):
     """Test tab prev command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Create second tab and set it as current
     tab2 = MagicMock()
@@ -547,14 +610,16 @@ def test_tab_prev(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, 
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_prev_wrap_around(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab prev command wraps around to last tab."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Create second tab
     tab2 = MagicMock()
@@ -574,12 +639,14 @@ def test_tab_prev_wrap_around(
 
 
 # Test Tab Goto
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_tab_goto(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab):
+def test_tab_goto(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab):
     """Test tab goto command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "goto", "0"])
     assert result.exit_code == 0
@@ -587,14 +654,16 @@ def test_tab_goto(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, 
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_goto_with_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_tab
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_tab
 ):
     """Test tab goto command with specific window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "goto", "0", "--window", "test-window-789"])
     assert result.exit_code == 0
@@ -602,28 +671,32 @@ def test_tab_goto_with_window(
     mock_tab.async_select.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_goto_index_out_of_range(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab goto command with out of range index."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "goto", "5"])
     assert result.exit_code == 4
     assert "Tab index 5 out of range" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_tab_goto_window_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test tab goto command with non-existent window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["tab", "goto", "0", "--window", "non-existent"])
     assert result.exit_code == 3
@@ -634,6 +707,7 @@ def test_tab_goto_window_not_found(
 def test_tab_command_no_cookie(runner):
     """Test tab command without iTerm2 cookie."""
     with patch("os.environ.get", return_value=None):
-        result = runner.invoke(cli, ["tab", "new"])
-        assert result.exit_code == 2
-        assert "Not running inside iTerm2" in result.output
+        with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+            result = runner.invoke(cli, ["tab", "new"])
+            assert result.exit_code == 2
+            assert "Not running inside iTerm2" in result.output

@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from it2.cli import cli
 
 
-def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app):
+def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app):
     """Helper to set up common mocks for tests."""
 
     # Set up environment - return None for completion vars, but cookie for iTerm2
@@ -24,7 +24,12 @@ def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, moc
 
     mock_env_get.side_effect = env_side_effect
 
-    # Set up connection manager
+    # Mock the new external connection path
+    mock_connection = MagicMock()
+    mock_async_create.return_value = mock_connection
+    mock_async_get_app.return_value = mock_app
+
+    # Set up connection manager (legacy)
     mock_conn_mgr.connect = AsyncMock()
     mock_conn_mgr.get_app = AsyncMock(return_value=mock_app)
     mock_conn_mgr.close = AsyncMock()
@@ -83,12 +88,14 @@ def mock_app():
     return app
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_activate(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_activate(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app activate command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["app", "activate"])
     assert result.exit_code == 0
@@ -96,12 +103,14 @@ def test_app_activate(mock_conn_mgr, mock_env_get, mock_run_until_complete, runn
     mock_app.async_activate.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_hide(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_hide(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app hide command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock app.async_hide
     mock_app.async_hide = AsyncMock()
@@ -112,10 +121,12 @@ def test_app_hide(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, 
     mock_app.async_hide.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_quit(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_quit(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app quit command."""
     # Skip this test - requires complex protobuf mocking
     import pytest
@@ -123,12 +134,14 @@ def test_app_quit(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, 
     pytest.skip("Requires complex protobuf mocking")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_version(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_version(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app version command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock version variables
     mock_app.async_get_variable = AsyncMock(
@@ -141,10 +154,12 @@ def test_app_version(mock_conn_mgr, mock_env_get, mock_run_until_complete, runne
     assert "Build: 12345" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_theme_dark(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_theme_dark(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app theme set to dark command."""
     # Skip this test - requires iterm2.Theme enum
     import pytest
@@ -152,10 +167,12 @@ def test_app_theme_dark(mock_conn_mgr, mock_env_get, mock_run_until_complete, ru
     pytest.skip("Requires iterm2.Theme enum")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_theme_light(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_theme_light(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app theme set to light command."""
     # Skip this test - requires iterm2.Theme enum
     import pytest
@@ -163,11 +180,13 @@ def test_app_theme_light(mock_conn_mgr, mock_env_get, mock_run_until_complete, r
     pytest.skip("Requires iterm2.Theme enum")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_app_create_hotkey_window(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test app create-hotkey-window command."""
     # Skip this test - HotkeyWindow not available in test environment
@@ -176,12 +195,14 @@ def test_app_create_hotkey_window(
     pytest.skip("HotkeyWindow not available in test environment")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_get_focus(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_get_focus(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app get-focus command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock session variable
     session = mock_app.current_terminal_window.current_tab.current_session
@@ -195,12 +216,14 @@ def test_app_get_focus(mock_conn_mgr, mock_env_get, mock_run_until_complete, run
     assert "Session name: Test Session" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_broadcast_on(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_broadcast_on(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app broadcast on command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock tab broadcast settings
     tab = mock_app.current_terminal_window.current_tab
@@ -212,12 +235,14 @@ def test_app_broadcast_on(mock_conn_mgr, mock_env_get, mock_run_until_complete, 
     tab.async_set_broadcast_domains.assert_called_once_with(["all"])
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_broadcast_off(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_app_broadcast_off(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test app broadcast off command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     # Mock tab broadcast settings
     tab = mock_app.current_terminal_window.current_tab

@@ -10,7 +10,7 @@ from click.testing import CliRunner
 from it2.cli import cli
 
 
-def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app):
+def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app):
     """Helper to set up common mocks for tests."""
 
     # Set up environment - return None for completion vars, but cookie for iTerm2
@@ -25,7 +25,12 @@ def setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, moc
 
     mock_env_get.side_effect = env_side_effect
 
-    # Set up connection manager
+    # Mock the new external connection path
+    mock_connection = MagicMock()
+    mock_async_create.return_value = mock_connection
+    mock_async_get_app.return_value = mock_app
+
+    # Set up connection manager (legacy)
     mock_conn_mgr.connect = AsyncMock()
     mock_conn_mgr.get_app = AsyncMock(return_value=mock_app)
     mock_conn_mgr.close = AsyncMock()
@@ -98,14 +103,16 @@ def mock_app(mock_window):
 
 
 # Test Window Creation
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_new(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window new command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "new"])
     assert result.exit_code == 0
@@ -113,14 +120,16 @@ def test_window_new(
     mock_app.async_create_window.assert_called_once_with(profile=None)
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_new_with_profile(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window new command with profile."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "new", "--profile", "MyProfile"])
     assert result.exit_code == 0
@@ -128,14 +137,16 @@ def test_window_new_with_profile(
     mock_app.async_create_window.assert_called_once_with(profile="MyProfile")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_new_with_command(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window new command with command to run."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "new", "--command", "ls -la"])
     assert result.exit_code == 0
@@ -143,12 +154,14 @@ def test_window_new_with_command(
     mock_window.current_tab.current_session.async_send_text.assert_called_once_with("ls -la\r")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_window_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app):
+def test_window_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app):
     """Test window new command when creation fails."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.async_create_window.return_value = None
 
     result = runner.invoke(cli, ["window", "new"])
@@ -157,14 +170,16 @@ def test_window_new_failure(mock_conn_mgr, mock_env_get, mock_run_until_complete
 
 
 # Test Window Listing
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_list_json(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window list command with JSON output."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "list", "--json"])
     assert result.exit_code == 0
@@ -180,11 +195,13 @@ def test_window_list_json(
     assert output_data[0]["is_fullscreen"] is False
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_list_table(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window list command with table output."""
     # Skip this test - Rich console formatting is difficult to test in CI
@@ -192,14 +209,16 @@ def test_window_list_table(
 
 
 # Test Window Closing
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_close_current(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window close command for current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "close", "--force"])
     assert result.exit_code == 0
@@ -207,14 +226,16 @@ def test_window_close_current(
     mock_window.async_close.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_close_specific(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window close command for specific window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "close", "test-window-789", "--force"])
     assert result.exit_code == 0
@@ -222,28 +243,32 @@ def test_window_close_specific(
     mock_window.async_close.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_close_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window close command when window not found."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "close", "non-existent-window", "--force"])
     assert result.exit_code == 3
     assert "Window 'non-existent-window' not found" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_close_no_current(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window close command when no current window."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.current_terminal_window = None
 
     result = runner.invoke(cli, ["window", "close", "--force"])
@@ -252,14 +277,16 @@ def test_window_close_no_current(
 
 
 # Test Window Focus
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_focus(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window focus command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "focus", "test-window-789"])
     assert result.exit_code == 0
@@ -267,14 +294,16 @@ def test_window_focus(
     mock_window.async_activate.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_focus_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window focus command when window not found."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "focus", "non-existent-window"])
     assert result.exit_code == 3
@@ -282,11 +311,13 @@ def test_window_focus_not_found(
 
 
 # Test Window Move
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_move(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window move command."""
     # Skip this test - requires iterm2.Point and iterm2.Frame
@@ -294,11 +325,13 @@ def test_window_move(
 
 
 # Test Window Resize
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_resize(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window resize command."""
     # Skip this test - requires iterm2.Frame and iterm2.Size
@@ -306,14 +339,16 @@ def test_window_resize(
 
 
 # Test Window Fullscreen
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_fullscreen_toggle(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window fullscreen toggle command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "fullscreen", "toggle"])
     assert result.exit_code == 0
@@ -321,14 +356,16 @@ def test_window_fullscreen_toggle(
     mock_window.async_toggle_fullscreen.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_fullscreen_on(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window fullscreen on command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "fullscreen", "on"])
     assert result.exit_code == 0
@@ -336,14 +373,16 @@ def test_window_fullscreen_on(
     mock_window.async_toggle_fullscreen.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_fullscreen_off(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window fullscreen off command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_window.async_is_fullscreen.return_value = True
 
     result = runner.invoke(cli, ["window", "fullscreen", "off"])
@@ -352,14 +391,16 @@ def test_window_fullscreen_off(
     mock_window.async_toggle_fullscreen.assert_called_once()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_fullscreen_already_on(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window fullscreen on when already on."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_window.async_is_fullscreen.return_value = True
 
     result = runner.invoke(cli, ["window", "fullscreen", "on"])
@@ -368,14 +409,16 @@ def test_window_fullscreen_already_on(
     mock_window.async_toggle_fullscreen.assert_not_called()
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_fullscreen_already_off(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app, mock_window
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app, mock_window
 ):
     """Test window fullscreen off when already off."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_window.async_is_fullscreen.return_value = False
 
     result = runner.invoke(cli, ["window", "fullscreen", "off"])
@@ -385,14 +428,16 @@ def test_window_fullscreen_already_off(
 
 
 # Test Window Arrangements
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_save(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange save command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "arrange", "save", "my-arrangement"])
     assert result.exit_code == 0
@@ -400,14 +445,16 @@ def test_window_arrange_save(
     mock_app.async_save_window_arrangement.assert_called_once_with("my-arrangement")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_save_failure(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange save command when save fails."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.async_save_window_arrangement.return_value = None
 
     result = runner.invoke(cli, ["window", "arrange", "save", "my-arrangement"])
@@ -415,14 +462,16 @@ def test_window_arrange_save_failure(
     assert "Failed to save arrangement" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_restore(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange restore command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "arrange", "restore", "arrangement1"])
     assert result.exit_code == 0
@@ -430,28 +479,32 @@ def test_window_arrange_restore(
     mock_app.async_restore_window_arrangement.assert_called_once_with("arrangement1")
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_restore_not_found(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange restore command when arrangement not found."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "arrange", "restore", "non-existent"])
     assert result.exit_code == 3
     assert "Arrangement 'non-existent' not found" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_list(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange list command."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
 
     result = runner.invoke(cli, ["window", "arrange", "list"])
     assert result.exit_code == 0
@@ -460,14 +513,16 @@ def test_window_arrange_list(
     assert "arrangement2" in result.output
 
 
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
 def test_window_arrange_list_empty(
-    mock_conn_mgr, mock_env_get, mock_run_until_complete, runner, mock_app
+    mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, runner, mock_app
 ):
     """Test window arrange list command when no arrangements."""
-    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_app)
+    setup_iterm2_mocks(mock_conn_mgr, mock_env_get, mock_run_until_complete, mock_async_get_app, mock_async_create, mock_app)
     mock_app.async_list_window_saved_arrangements.return_value = []
 
     result = runner.invoke(cli, ["window", "arrange", "list"])
@@ -479,6 +534,7 @@ def test_window_arrange_list_empty(
 def test_window_command_no_cookie(runner):
     """Test window command without iTerm2 cookie."""
     with patch("os.environ.get", return_value=None):
-        result = runner.invoke(cli, ["window", "list"])
-        assert result.exit_code == 2
-        assert "Not running inside iTerm2" in result.output
+        with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+            result = runner.invoke(cli, ["window", "list"])
+            assert result.exit_code == 2
+            assert "Not running inside iTerm2" in result.output
