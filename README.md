@@ -1,4 +1,4 @@
-# iTerm2 CLI (`it2`)
+# it2
 
 A powerful command-line interface for controlling iTerm2 using its Python API.
 
@@ -16,7 +16,7 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 ## Requirements
 
 - macOS with iTerm2 3.3.0 or later
-- Python 3.7+
+- Python 3.8+
 - iTerm2 Python API enabled (Preferences > General > Magic > Enable Python API)
 
 ## Installation
@@ -24,7 +24,7 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 ### Using pip
 
 ```bash
-pip install -e .
+pip install it2
 ```
 
 ### Using uvx (recommended)

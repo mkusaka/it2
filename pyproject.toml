@@ -3,7 +3,7 @@ requires = ["hatchling==1.25.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "iterm2-cli"
+name = "it2"
 version = "0.1.1"
 description = "A powerful command-line interface for controlling iTerm2"
 readme = "README.md"
@@ -44,6 +44,7 @@ Homepage = "https://github.com/mkusaka/it2"
 "Bug Tracker" = "https://github.com/mkusaka/it2/issues"
 Documentation = "https://github.com/mkusaka/it2#readme"
 "Source Code" = "https://github.com/mkusaka/it2"
+PyPI = "https://pypi.org/project/it2/"
 
 [project.scripts]
 it2 = "it2.cli:main"
