@@ -23,7 +23,6 @@ def profile() -> None:
 @profile.command("list")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @run_command
-@with_connection
 async def list_profiles(as_json: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """List all profiles."""
     profiles = await iterm2.PartialProfile.async_query(connection)
@@ -53,7 +52,6 @@ async def list_profiles(as_json: bool, connection: iterm2.Connection, app: iterm
 @click.argument("name")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @run_command
-@with_connection
 async def show(name: str, as_json: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Show profile details."""
     # Find profile by name
@@ -106,7 +104,6 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
 @click.argument("name")
 @click.option("--base", "-b", help="Base profile to copy from")
 @run_command
-@with_connection
 async def create(
     name: str, base: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -149,7 +146,6 @@ async def create(
 @click.argument("name")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def apply(
     name: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -195,7 +191,6 @@ async def apply(
 @click.argument("property_name")
 @click.argument("value")
 @run_command
-@with_connection
 async def set_property(
     name: str, property_name: str, value: str, connection: iterm2.Connection, app: iterm2.App
 ) -> None:

@@ -16,7 +16,6 @@ def app() -> None:
 
 @app.command()
 @run_command
-@with_connection
 async def activate(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Activate iTerm2 (bring to front)."""
     await app.async_activate()
@@ -25,7 +24,6 @@ async def activate(connection: iterm2.Connection, app: iterm2.App) -> None:
 
 @app.command()
 @run_command
-@with_connection
 async def hide(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Hide iTerm2."""
     await app.async_hide()
@@ -35,7 +33,6 @@ async def hide(connection: iterm2.Connection, app: iterm2.App) -> None:
 @app.command("quit")
 @click.option("--force", "-f", is_flag=True, help="Force quit without confirmation")
 @run_command
-@with_connection
 async def quit_app(force: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Quit iTerm2."""
     if not force:
@@ -57,7 +54,6 @@ def broadcast() -> None:
 
 @broadcast.command("on")
 @run_command
-@with_connection
 async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Enable input broadcasting to all sessions."""
     # Get current window
@@ -76,7 +72,6 @@ async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
 
 @broadcast.command("off")
 @run_command
-@with_connection
 async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Disable input broadcasting."""
     # Get current window
@@ -96,7 +91,6 @@ async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
 @broadcast.command("add")
 @click.argument("session_ids", nargs=-1, required=True)
 @run_command
-@with_connection
 async def broadcast_add(
     session_ids: List[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -121,7 +115,6 @@ async def broadcast_add(
 
 @app.command("version")
 @run_command
-@with_connection
 async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Show iTerm2 version information."""
     # Get version info
@@ -135,7 +128,6 @@ async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
 @app.command("theme")
 @click.argument("theme", type=click.Choice(["light", "dark", "auto"]))
 @run_command
-@with_connection
 async def theme(theme: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Set iTerm2 theme."""
     theme_map = {
@@ -151,7 +143,6 @@ async def theme(theme: str, connection: iterm2.Connection, app: iterm2.App) -> N
 @app.command("create-hotkey-window")
 @click.option("--profile", "-p", help="Profile to use")
 @run_command
-@with_connection
 async def create_hotkey_window(
     profile: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -167,7 +158,6 @@ async def create_hotkey_window(
 
 @app.command("get-focus")
 @run_command
-@with_connection
 async def get_focus(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Get information about the currently focused element."""
     # Get current window

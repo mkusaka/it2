@@ -22,7 +22,6 @@ def monitor() -> None:
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--pattern", "-p", help="Filter output by regex pattern")
 @run_command
-@with_connection
 async def output(
     follow: bool,
     session: Optional[str],
@@ -84,7 +83,6 @@ async def output(
 @click.option("--pattern", "-p", help="Filter keystrokes by regex pattern")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def keystroke(
     pattern: Optional[str], session: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -126,7 +124,6 @@ async def keystroke(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--app-level", is_flag=True, help="Monitor app-level variable")
 @run_command
-@with_connection
 async def variable(
     variable_name: str,
     session: Optional[str],
@@ -169,7 +166,6 @@ async def variable(
 @monitor.command()
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def prompt(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Monitor shell prompts (requires shell integration)."""
     sessions = await get_target_sessions(app, session)
@@ -204,7 +200,6 @@ async def prompt(session: Optional[str], connection: iterm2.Connection, app: ite
 @monitor.command("activity")
 @click.option("--all", "-a", is_flag=True, help="Monitor all sessions")
 @run_command
-@with_connection
 async def activity(all_sessions: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Monitor session activity."""
     if all_sessions:

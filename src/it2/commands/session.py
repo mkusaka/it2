@@ -25,7 +25,6 @@ def session() -> None:
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--all", "-a", "all_sessions", is_flag=True, help="Send to all sessions")
 @run_command
-@with_connection
 async def send(
     text: str,
     session: Optional[str],
@@ -48,7 +47,6 @@ async def send(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--all", "-a", "all_sessions", is_flag=True, help="Run in all sessions")
 @run_command
-@with_connection
 async def run(
     command: str,
     session: Optional[str],
@@ -103,7 +101,6 @@ async def list_sessions(as_json: bool, connection: iterm2.Connection, app: iterm
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--profile", "-p", help="Profile to use for new pane")
 @run_command
-@with_connection
 async def split(
     vertical: bool,
     session: Optional[str],
@@ -130,7 +127,6 @@ async def split(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
-@with_connection
 async def close(
     session: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -148,7 +144,6 @@ async def close(
 @session.command("restart")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def restart(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Restart session."""
     sessions = await get_target_sessions(app, session)
@@ -161,7 +156,6 @@ async def restart(session: Optional[str], connection: iterm2.Connection, app: it
 @session.command("focus")
 @click.argument("session_id")
 @run_command
-@with_connection
 async def focus(session_id: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Focus a specific session."""
     target_session = app.get_session_by_id(session_id)
@@ -176,7 +170,6 @@ async def focus(session_id: str, connection: iterm2.Connection, app: iterm2.App)
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @click.option("--lines", "-n", type=int, help="Number of lines to read")
 @run_command
-@with_connection
 async def read(
     session: Optional[str], lines: Optional[int], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -201,7 +194,6 @@ async def read(
 @session.command("copy")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def copy(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Copy selection to clipboard."""
     sessions = await get_target_sessions(app, session)
@@ -225,7 +217,6 @@ async def copy(session: Optional[str], connection: iterm2.Connection, app: iterm
 @session.command("clear")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def clear(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Clear screen."""
     sessions = await get_target_sessions(app, session)
@@ -242,7 +233,6 @@ async def clear(session: Optional[str], connection: iterm2.Connection, app: iter
 @click.option("--output", "-o", required=True, help="Output file path")
 @click.option("--history", is_flag=True, help="Include scrollback history")
 @run_command
-@with_connection
 async def capture(
     session: Optional[str],
     output: str,
@@ -272,7 +262,6 @@ async def capture(
 @click.argument("name")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def set_name(
     name: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -288,7 +277,6 @@ async def set_name(
 @click.argument("variable")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def get_var(
     variable: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -308,7 +296,6 @@ async def get_var(
 @click.argument("value")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-@with_connection
 async def set_var(
     variable: str,
     value: str,

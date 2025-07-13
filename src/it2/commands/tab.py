@@ -24,7 +24,6 @@ def tab() -> None:
 @click.option("--window", "-w", help="Window ID to create tab in (default: current)")
 @click.option("--command", "-c", help="Command to run in new tab")
 @run_command
-@with_connection
 async def new(
     profile: Optional[str],
     window: Optional[str],
@@ -66,7 +65,6 @@ async def new(
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.option("--window", "-w", help="Window ID to list tabs from")
 @run_command
-@with_connection
 async def list_tabs(
     as_json: bool, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -124,7 +122,6 @@ async def list_tabs(
 @click.argument("tab_id", required=False)
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
-@with_connection
 async def close(
     tab_id: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -163,7 +160,6 @@ async def close(
 @click.argument("tab_id_or_index", required=True)
 @click.option("--window", "-w", help="Window ID (for index-based selection)")
 @run_command
-@with_connection
 async def select(
     tab_id_or_index: str, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -216,7 +212,6 @@ async def select(
 @click.argument("index", type=int)
 @click.argument("tab_id", required=False)
 @run_command
-@with_connection
 async def move(
     index: int, tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -253,7 +248,6 @@ async def move(
 
 @tab.command("next")
 @run_command
-@with_connection
 async def next_tab(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Switch to next tab."""
     window = app.current_terminal_window
@@ -275,7 +269,6 @@ async def next_tab(connection: iterm2.Connection, app: iterm2.App) -> None:
 
 @tab.command()
 @run_command
-@with_connection
 async def prev(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Switch to previous tab."""
     window = app.current_terminal_window
@@ -299,7 +292,6 @@ async def prev(connection: iterm2.Connection, app: iterm2.App) -> None:
 @click.argument("index", type=int)
 @click.option("--window", "-w", help="Window ID (default: current)")
 @run_command
-@with_connection
 async def goto(
     index: int, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:

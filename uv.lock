@@ -400,7 +400,7 @@ wheels = [
 
 [[package]]
 name = "it2"
-version = "0.1.6"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -422,6 +422,11 @@ dev = [
     { name = "types-pyyaml" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "build" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=22.0" },
@@ -438,6 +443,9 @@ requires-dist = [
     { name = "twine", marker = "extra == 'dev'", specifier = "==6.0.1" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "build", specifier = ">=1.2.2.post1" }]
 
 [[package]]
 name = "iterm2"

@@ -23,7 +23,6 @@ def window() -> None:
 @click.option("--profile", "-p", help="Profile to use for new window")
 @click.option("--command", "-c", help="Command to run in new window")
 @run_command
-@with_connection
 async def new(
     profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -44,7 +43,6 @@ async def new(
 @window.command("list")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @run_command
-@with_connection
 async def list_windows(as_json: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """List all windows."""
     windows_data = []
@@ -86,7 +84,6 @@ async def list_windows(as_json: bool, connection: iterm2.Connection, app: iterm2
 @click.argument("window_id", required=False)
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
-@with_connection
 async def close(
     window_id: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -117,7 +114,6 @@ async def close(
 @window.command()
 @click.argument("window_id")
 @run_command
-@with_connection
 async def focus(window_id: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Focus a specific window."""
     window = None
@@ -138,7 +134,6 @@ async def focus(window_id: str, connection: iterm2.Connection, app: iterm2.App) 
 @click.argument("y", type=int)
 @click.argument("window_id", required=False)
 @run_command
-@with_connection
 async def move(
     x: int, y: int, window_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -167,7 +162,6 @@ async def move(
 @click.argument("height", type=int)
 @click.argument("window_id", required=False)
 @run_command
-@with_connection
 async def resize(
     width: int,
     height: int,
@@ -200,7 +194,6 @@ async def resize(
 @click.argument("state", type=click.Choice(["on", "off", "toggle"]))
 @click.argument("window_id", required=False)
 @run_command
-@with_connection
 async def fullscreen(
     state: str, window_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
@@ -243,7 +236,6 @@ def arrange() -> None:
 @arrange.command("save")
 @click.argument("name")
 @run_command
-@with_connection
 async def arrange_save(name: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Save current window arrangement."""
     arrangement = await app.async_save_window_arrangement(name)
@@ -256,7 +248,6 @@ async def arrange_save(name: str, connection: iterm2.Connection, app: iterm2.App
 @arrange.command("restore")
 @click.argument("name")
 @run_command
-@with_connection
 async def arrange_restore(name: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Restore window arrangement."""
     # List saved arrangements
@@ -271,7 +262,6 @@ async def arrange_restore(name: str, connection: iterm2.Connection, app: iterm2.
 
 @arrange.command("list")
 @run_command
-@with_connection
 async def arrange_list(connection: iterm2.Connection, app: iterm2.App) -> None:
     """List saved window arrangements."""
     arrangements = await app.async_list_window_saved_arrangements()

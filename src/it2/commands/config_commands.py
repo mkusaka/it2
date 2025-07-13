@@ -18,7 +18,6 @@ def register_config_commands(cli: click.Group) -> None:
     @cli.command("load")
     @click.argument("profile_name")
     @run_command
-    @with_connection
     async def load_profile(
         profile_name: str, connection: iterm2.Connection, app: iterm2.App
     ) -> None:
