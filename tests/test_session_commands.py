@@ -455,8 +455,8 @@ def test_session_capture(
 
 def test_session_send_error_no_cookie(runner):
     """Test session send command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None):
-        with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
-            result = runner.invoke(cli, ["session", "send", "Hello"])
-            assert result.exit_code == 2
-            assert "Not running inside iTerm2" in result.output
+    with patch("os.environ.get", return_value=None), \
+         patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+        result = runner.invoke(cli, ["session", "send", "Hello"])
+        assert result.exit_code == 2
+        assert "Not running inside iTerm2" in result.output

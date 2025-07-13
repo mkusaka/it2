@@ -533,8 +533,8 @@ def test_window_arrange_list_empty(
 # Test Error Handling
 def test_window_command_no_cookie(runner):
     """Test window command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None):
-        with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
-            result = runner.invoke(cli, ["window", "list"])
-            assert result.exit_code == 2
-            assert "Not running inside iTerm2" in result.output
+    with patch("os.environ.get", return_value=None), \
+         patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+        result = runner.invoke(cli, ["window", "list"])
+        assert result.exit_code == 2
+        assert "Not running inside iTerm2" in result.output
