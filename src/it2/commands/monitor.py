@@ -7,7 +7,7 @@ from typing import Optional, Pattern
 import click
 import iterm2
 
-from ..core.connection import run_command, with_connection
+from ..core.connection import run_command
 from ..core.errors import handle_error
 from ..core.session_handler import get_target_sessions
 

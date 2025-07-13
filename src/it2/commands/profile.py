@@ -9,7 +9,7 @@ from rich import print as rprint
 from rich.console import Console
 from rich.table import Table
 
-from ..core.connection import run_command, with_connection
+from ..core.connection import run_command
 from ..core.errors import handle_error
 
 console = Console()

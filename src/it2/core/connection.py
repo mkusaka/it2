@@ -3,7 +3,7 @@
 import os
 import sys
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Optional, TypeVar
 
 import iterm2
 from iterm2 import App, Connection
@@ -69,14 +69,14 @@ def with_connection(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-def run_command(func: Callable[..., T]) -> Any:
+def run_command(func: Callable[..., Awaitable[T]]) -> Any:
     """Run an async command function with connection management."""
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Try external connection first (like iterm2-focus), fallback to internal
         import asyncio
-        
+
         async def run_with_connection() -> Any:
             connection = None
             try:
@@ -89,19 +89,21 @@ def run_command(func: Callable[..., T]) -> Any:
             finally:
                 # Connection objects don't have async_close(), they close automatically
                 pass
-        
+
         try:
             # Use asyncio.run for external connection
-            result = asyncio.run(run_with_connection())
-            return result
-        except Exception as external_error:
+            return asyncio.run(run_with_connection())
+        except Exception:
             # If external connection fails and we have ITERM2_COOKIE, try internal
             if os.environ.get("ITERM2_COOKIE"):
                 try:
                     return iterm2.run_until_complete(func(*args, **kwargs))
-                except Exception as internal_error:
+                except Exception:
                     # Both failed, show error
-                    print("Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr)
+                    print(
+                        "Error: Not running inside iTerm2 or Python API not enabled.",
+                        file=sys.stderr,
+                    )
                     print(
                         "Enable Python API in: Preferences > General > Magic > Enable Python API",
                         file=sys.stderr,
@@ -109,7 +111,9 @@ def run_command(func: Callable[..., T]) -> Any:
                     sys.exit(2)
             else:
                 # No cookie and external failed, show error
-                print("Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr)
+                print(
+                    "Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr
+                )
                 print(
                     "Enable Python API in: Preferences > General > Magic > Enable Python API",
                     file=sys.stderr,

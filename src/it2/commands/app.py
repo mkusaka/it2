@@ -5,7 +5,7 @@ from typing import List, Optional
 import click
 import iterm2
 
-from ..core.connection import run_command, with_connection
+from ..core.connection import run_command
 from ..core.errors import handle_error
 
 
