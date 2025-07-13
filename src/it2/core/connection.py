@@ -70,19 +70,50 @@ def with_connection(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def run_command(func: Callable[..., T]) -> Any:
-    """Run an async command function."""
+    """Run an async command function with connection management."""
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Check if iTerm2 cookie is set
-        if not os.environ.get("ITERM2_COOKIE"):
-            print("Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr)
-            print(
-                "Enable Python API in: Preferences > General > Magic > Enable Python API",
-                file=sys.stderr,
-            )
-            sys.exit(2)
-
-        return iterm2.run_until_complete(func(*args, **kwargs))
+        # Try external connection first (like iterm2-focus), fallback to internal
+        import asyncio
+        
+        async def run_with_connection() -> Any:
+            connection = None
+            try:
+                connection = await iterm2.Connection.async_create()
+                app = await iterm2.async_get_app(connection)
+                # Inject connection and app into function kwargs
+                kwargs["connection"] = connection
+                kwargs["app"] = app
+                return await func(*args, **kwargs)
+            finally:
+                # Connection objects don't have async_close(), they close automatically
+                pass
+        
+        try:
+            # Use asyncio.run for external connection
+            result = asyncio.run(run_with_connection())
+            return result
+        except Exception as external_error:
+            # If external connection fails and we have ITERM2_COOKIE, try internal
+            if os.environ.get("ITERM2_COOKIE"):
+                try:
+                    return iterm2.run_until_complete(func(*args, **kwargs))
+                except Exception as internal_error:
+                    # Both failed, show error
+                    print("Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr)
+                    print(
+                        "Enable Python API in: Preferences > General > Magic > Enable Python API",
+                        file=sys.stderr,
+                    )
+                    sys.exit(2)
+            else:
+                # No cookie and external failed, show error
+                print("Error: Not running inside iTerm2 or Python API not enabled.", file=sys.stderr)
+                print(
+                    "Enable Python API in: Preferences > General > Magic > Enable Python API",
+                    file=sys.stderr,
+                )
+                sys.exit(2)
 
     return wrapper

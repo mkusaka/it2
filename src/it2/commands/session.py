@@ -69,7 +69,6 @@ async def run(
 @session.command("list")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @run_command
-@with_connection
 async def list_sessions(as_json: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """List all sessions."""
     sessions_data = []
