@@ -1,4 +1,4 @@
-.PHONY: help install build test test-cov lint lint-fix format format-check mypy check clean publish publish-test version-patch version-minor version-major patch minor major
+.PHONY: help install build check-dist test test-cov lint lint-fix format format-check mypy check clean publish publish-test version-patch version-minor version-major patch minor major
 
 # Default target - show help
 .DEFAULT_GOAL := help
@@ -13,6 +13,9 @@ install: ## Install all dependencies including dev
 # Building
 build: ## Build the package
 	uv build
+
+check-dist: ## Check distribution with twine
+	uv run twine check dist/*
 
 # Testing
 test: ## Run tests
