@@ -85,9 +85,10 @@ def test_no_iterm2_cookie(mock_env_get, runner):
     mock_env_get.return_value = None
 
     # Any command that requires connection should fail
-    result = runner.invoke(cli, ["session", "list"])
-    assert result.exit_code == 2
-    assert "Not running inside iTerm2" in result.output
+    with patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
+        result = runner.invoke(cli, ["session", "list"])
+        assert result.exit_code == 2
+        assert "Not running inside iTerm2" in result.output
 
 
 def test_command_groups_exist(runner):

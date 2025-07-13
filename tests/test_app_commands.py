@@ -256,7 +256,8 @@ def test_app_broadcast_off(mock_conn_mgr, mock_env_get, mock_run_until_complete,
 
 def test_app_command_no_cookie(runner):
     """Test app command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None):
+    with patch("os.environ.get", return_value=None), \
+         patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")):
         result = runner.invoke(cli, ["app", "activate"])
         assert result.exit_code == 2
         assert "Not running inside iTerm2" in result.output
