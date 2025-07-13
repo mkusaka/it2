@@ -94,24 +94,7 @@ jobs:
       - name: Check distribution
         run: |
           ls -la dist/
-          # IMPORTANT: Twine check compatibility workaround
-          # 
-          # Issue: Hatchling includes a 'License-File' field in the wheel metadata
-          # according to PEP 639, but some versions of twine/pkginfo don't recognize
-          # this field and report it as "unrecognized or malformed".
-          # 
-          # This is NOT an actual problem:
-          # - The wheel/sdist packages are completely valid
-          # - PyPI accepts these packages without issues
-          # - The metadata follows the specification correctly
-          # - Other projects like iterm2-focus have the same "issue"
-          # 
-          # The grep -v filters out this specific false-positive warning while
-          # still catching any real distribution issues.
-          # 
-          # This workaround can be removed once the Python packaging ecosystem
-          # fully supports PEP 639 license metadata.
-          uv run twine check dist/* 2>&1 | grep -v "license-file" || true
+          uv run twine check dist/*
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
