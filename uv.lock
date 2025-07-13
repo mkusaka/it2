@@ -411,21 +411,8 @@ wheels = [
 ]
 
 [[package]]
-name = "iterm2"
-version = "2.10"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "protobuf" },
-    { name = "websockets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/57/6b/98ce521178651fad694c7ed704c882e4ef0b10fecc0a687b4e859ef623c3/iterm2-2.10.tar.gz", hash = "sha256:8c0cf95ffca9f1bf7409883618deee66acd73c63929222e23435780dcc516869", size = 140774 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/1f/ccd1d509c8fdcaf31ba0a2a15ab9e1086bc513be5aca4ff5ee83b19d22e9/iterm2-2.10-py3-none-any.whl", hash = "sha256:66a59f2737cb9006931bd7fb21d961e0600009c5238f7a75ded4c1e690cd5684", size = 154848 },
-]
-
-[[package]]
-name = "iterm2-cli"
-version = "0.1.1"
+name = "it2"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
@@ -462,6 +449,19 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.240" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
+]
+
+[[package]]
+name = "iterm2"
+version = "2.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "protobuf" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/57/6b/98ce521178651fad694c7ed704c882e4ef0b10fecc0a687b4e859ef623c3/iterm2-2.10.tar.gz", hash = "sha256:8c0cf95ffca9f1bf7409883618deee66acd73c63929222e23435780dcc516869", size = 140774 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a7/1f/ccd1d509c8fdcaf31ba0a2a15ab9e1086bc513be5aca4ff5ee83b19d22e9/iterm2-2.10-py3-none-any.whl", hash = "sha256:66a59f2737cb9006931bd7fb21d961e0600009c5238f7a75ded4c1e690cd5684", size = 154848 },
 ]
 
 [[package]]
