@@ -56,7 +56,8 @@ async def new(
         if command:
             # Run command in the new tab's session
             session = tab.current_session
-            await session.async_send_text(command + "\r")
+            if session:
+                await session.async_send_text(command + "\r")
     else:
         handle_error("Failed to create tab")
 
@@ -112,7 +113,8 @@ async def list_tabs(
         for data in tabs_data:
             active = "✓" if data["is_active"] else ""
             table.add_row(
-                data["id"], data["window_id"], str(data["index"]), str(data["sessions"]), active
+                str(data["id"]), str(data["window_id"]), str(data["index"]),
+                str(data["sessions"]), active,
             )
 
         console.print(table)
@@ -141,11 +143,11 @@ async def close(
             handle_error(f"Tab '{tab_id}' not found", 3)
     else:
         # Use current tab
-        window = app.current_terminal_window
-        if not window:
+        current_window = app.current_terminal_window
+        if not current_window:
             handle_error("No current window", 3)
 
-        target_tab = window.current_tab
+        target_tab = current_window.current_tab
         if not target_tab:
             handle_error("No current tab", 3)
 

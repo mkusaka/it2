@@ -27,7 +27,10 @@ async def new(
     profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create new window."""
-    window = await iterm2.Window.async_create(connection, profile=profile, command=command)
+    # async_create defaults are None but typed as str; safe to pass Optional[str]
+    window = await iterm2.Window.async_create(
+        connection, profile=profile, command=command  # type: ignore[arg-type]
+    )
 
     if window:
         click.echo(f"Created new window: {window.window_id}")
@@ -70,7 +73,7 @@ async def list_windows(as_json: bool, connection: iterm2.Connection, app: iterm2
             size = f"{data['width']}x{data['height']}"
             fullscreen = "Yes" if data["is_fullscreen"] else "No"
 
-            table.add_row(data["id"], str(data["tabs"]), position, size, fullscreen)
+            table.add_row(str(data["id"]), str(data["tabs"]), position, size, fullscreen)
 
         console.print(table)
 
