@@ -6,10 +6,11 @@ from pathlib import Path
 
 import pytest
 import yaml
+
 from it2.utils.config import Config
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_config_file():
     """Create a temporary config file."""
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:

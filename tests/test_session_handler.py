@@ -3,10 +3,11 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from it2.core.session_handler import find_session_by_name, get_session_info, get_target_sessions
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_get_target_sessions_all():
     """Test getting all sessions."""
     # Mock app with windows, tabs, and sessions
@@ -33,7 +34,7 @@ async def test_get_target_sessions_all():
     assert session3 in sessions
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_get_target_sessions_specific():
     """Test getting specific session by ID."""
     mock_app = MagicMock()
@@ -49,7 +50,7 @@ async def test_get_target_sessions_specific():
     mock_app.get_session_by_id.assert_called_once_with("target-session")
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_get_target_sessions_active():
     """Test getting active session."""
     mock_app = MagicMock()
@@ -64,7 +65,7 @@ async def test_get_target_sessions_active():
     assert sessions[0] == active_session
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_get_session_info():
     """Test getting session information."""
     # Create mock session
@@ -97,7 +98,7 @@ async def test_get_session_info():
     assert info["is_tmux"] is False
 
 
-@pytest.mark.asyncio()
+@pytest.mark.asyncio
 async def test_find_session_by_name():
     """Test finding session by name."""
     mock_app = MagicMock()

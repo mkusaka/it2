@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
+
 from it2.cli import cli
 
 
@@ -46,13 +47,13 @@ def setup_iterm2_mocks(
     mock_run_until_complete.side_effect = run_coro
 
 
-@pytest.fixture()
+@pytest.fixture
 def runner():
     """Create a CLI test runner."""
     return CliRunner()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_app():
     """Create a mock app."""
     app = MagicMock()

@@ -4,10 +4,11 @@ from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
+
 from it2.cli import cli
 
 
-@pytest.fixture()
+@pytest.fixture
 def runner():
     """Create a CLI test runner."""
     return CliRunner()
