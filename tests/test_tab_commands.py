@@ -768,10 +768,10 @@ def test_tab_move_current(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "2"])
-    assert result.exit_code == 0
-    assert "Moved tab to index 2" in result.output
-    mock_tab.async_move_to_window_index.assert_called_once_with(2)
+    result = runner.invoke(cli, ["tab", "move"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Moved tab to new window" in result.output
+    mock_tab.async_move_to_window.assert_called_once()
 
 
 @patch("iterm2.Connection.async_create")
@@ -799,10 +799,10 @@ def test_tab_move_specific(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "1", "test-tab-456"])
-    assert result.exit_code == 0
-    assert "Moved tab to index 1" in result.output
-    mock_tab.async_move_to_window_index.assert_called_once_with(1)
+    result = runner.invoke(cli, ["tab", "move", "test-tab-456"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Moved tab to new window" in result.output
+    mock_tab.async_move_to_window.assert_called_once()
 
 
 @patch("iterm2.Connection.async_create")
@@ -829,7 +829,7 @@ def test_tab_move_tab_not_found(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "1", "non-existent"])
+    result = runner.invoke(cli, ["tab", "move", "non-existent"])
     assert result.exit_code == 3
     assert "Tab 'non-existent' not found" in result.output
 
@@ -859,7 +859,7 @@ def test_tab_move_no_current_window(
     )
     mock_app.current_terminal_window = None
 
-    result = runner.invoke(cli, ["tab", "move", "1"])
+    result = runner.invoke(cli, ["tab", "move"])
     assert result.exit_code == 3
     assert "No current window" in result.output
 
