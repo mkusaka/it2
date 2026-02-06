@@ -27,15 +27,10 @@ async def new(
     profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create new window."""
-    window = await app.async_create_window(profile=profile)
+    window = await iterm2.Window.async_create(connection, profile=profile, command=command)
 
     if window:
         click.echo(f"Created new window: {window.window_id}")
-
-        if command:
-            # Run command in the new window's first session
-            session = window.current_tab.current_session
-            await session.async_send_text(command + "\r")
     else:
         handle_error("Failed to create window")
 
@@ -56,7 +51,7 @@ async def list_windows(as_json: bool, connection: iterm2.Connection, app: iterm2
             "y": frame.origin.y,
             "width": frame.size.width,
             "height": frame.size.height,
-            "is_fullscreen": await window.async_is_fullscreen(),
+            "is_fullscreen": await window.async_get_fullscreen(),
         }
         windows_data.append(data)
 
@@ -212,7 +207,7 @@ async def fullscreen(
         if not window:
             handle_error("No current window", 3)
 
-    is_fullscreen = await window.async_is_fullscreen()
+    is_fullscreen = await window.async_get_fullscreen()
 
     if state == "toggle":
         new_state = not is_fullscreen
@@ -222,7 +217,7 @@ async def fullscreen(
         new_state = False
 
     if new_state != is_fullscreen:
-        await window.async_toggle_fullscreen()
+        await window.async_set_fullscreen(new_state)
         click.echo(f"Fullscreen {'enabled' if new_state else 'disabled'}")
     else:
         click.echo(f"Fullscreen already {'enabled' if is_fullscreen else 'disabled'}")
@@ -238,11 +233,8 @@ def arrange() -> None:
 @run_command
 async def arrange_save(name: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Save current window arrangement."""
-    arrangement = await app.async_save_window_arrangement(name)
-    if arrangement:
-        click.echo(f"Saved arrangement: {name}")
-    else:
-        handle_error("Failed to save arrangement")
+    await iterm2.Arrangement.async_save(connection, name)
+    click.echo(f"Saved arrangement: {name}")
 
 
 @arrange.command("restore")
@@ -251,12 +243,12 @@ async def arrange_save(name: str, connection: iterm2.Connection, app: iterm2.App
 async def arrange_restore(name: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Restore window arrangement."""
     # List saved arrangements
-    arrangements = await app.async_list_window_saved_arrangements()
+    arrangements = await iterm2.Arrangement.async_list(connection)
 
     if name not in arrangements:
         handle_error(f"Arrangement '{name}' not found", 3)
 
-    await app.async_restore_window_arrangement(name)
+    await iterm2.Arrangement.async_restore(connection, name)
     click.echo(f"Restored arrangement: {name}")
 
 
@@ -264,7 +256,7 @@ async def arrange_restore(name: str, connection: iterm2.Connection, app: iterm2.
 @run_command
 async def arrange_list(connection: iterm2.Connection, app: iterm2.App) -> None:
     """List saved window arrangements."""
-    arrangements = await app.async_list_window_saved_arrangements()
+    arrangements = await iterm2.Arrangement.async_list(connection)
 
     if arrangements:
         click.echo("Saved arrangements:")

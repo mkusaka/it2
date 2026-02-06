@@ -63,9 +63,7 @@ def mock_session():
 
 
 @pytest.fixture
-def mock_app(mock_session):
-    app = MagicMock()
-
+def mock_window(mock_session):
     tab = MagicMock()
     tab.tab_id = "test-tab-456"
     tab.sessions = [mock_session]
@@ -76,11 +74,16 @@ def mock_app(mock_session):
     window.tabs = [tab]
     window.current_tab = tab
     window.async_create_tab = AsyncMock(return_value=tab)
+    return window
 
-    app.windows = [window]
-    app.current_terminal_window = window
+
+@pytest.fixture
+def mock_app(mock_session, mock_window):
+    app = MagicMock()
+
+    app.windows = [mock_window]
+    app.current_terminal_window = mock_window
     app.get_session_by_id = MagicMock(return_value=mock_session)
-    app.async_create_window = AsyncMock(return_value=window)
 
     return app
 
@@ -657,6 +660,7 @@ def test_ls_shortcut_json(
 # ---------------------------------------------------------------------------
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -668,10 +672,13 @@ def test_new_shortcut(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
+    mock_window,
 ):
     """Test 'it2 new' shortcut creates a new window."""
+    mock_window_create.return_value = mock_window
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -683,10 +690,10 @@ def test_new_shortcut(
 
     result = runner.invoke(cli, ["new"])
     assert result.exit_code == 0, f"Failed with: {result.output}"
-    mock_app.async_create_window.assert_called_once_with(profile=None)
     assert "Created new window" in result.output
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -698,11 +705,13 @@ def test_new_shortcut_with_profile_and_command(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
-    mock_session,
+    mock_window,
 ):
     """Test 'it2 new --profile <name> --command <cmd>' passes options through."""
+    mock_window_create.return_value = mock_window
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -714,8 +723,8 @@ def test_new_shortcut_with_profile_and_command(
 
     result = runner.invoke(cli, ["new", "--profile", "Development", "--command", "htop"])
     assert result.exit_code == 0, f"Failed with: {result.output}"
-    mock_app.async_create_window.assert_called_once_with(profile="Development")
-    mock_session.async_send_text.assert_called_once_with("htop\r")
+    assert mock_window_create.call_args[1].get("profile") == "Development"
+    assert mock_window_create.call_args[1].get("command") == "htop"
 
 
 # ---------------------------------------------------------------------------
