@@ -105,18 +105,6 @@ async def broadcast_add(
     click.echo(f"Created broadcast group with {len(sessions)} sessions")
 
 
-@app.command("version")
-@run_command
-async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Show iTerm2 version information."""
-    # Get version info
-    build_number = await app.async_get_variable("buildNumber")
-    version_number = await app.async_get_variable("version")
-
-    click.echo(f"iTerm2 version: {version_number}")
-    click.echo(f"Build: {build_number}")
-
-
 @app.command("theme")
 @run_command
 async def theme(connection: iterm2.Connection, app: iterm2.App) -> None:

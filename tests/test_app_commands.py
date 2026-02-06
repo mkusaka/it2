@@ -187,41 +187,6 @@ def test_app_quit(
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
-def test_app_version(
-    mock_conn_mgr,
-    mock_env_get,
-    mock_run_until_complete,
-    mock_async_get_app,
-    mock_async_create,
-    runner,
-    mock_app,
-):
-    """Test app version command."""
-    setup_iterm2_mocks(
-        mock_conn_mgr,
-        mock_env_get,
-        mock_run_until_complete,
-        mock_async_get_app,
-        mock_async_create,
-        mock_app,
-    )
-
-    # Mock version variables
-    mock_app.async_get_variable = AsyncMock(
-        side_effect=lambda var: {"buildNumber": "12345", "version": "3.4.10"}.get(var)
-    )
-
-    result = runner.invoke(cli, ["app", "version"])
-    assert result.exit_code == 0
-    assert "iTerm2 version: 3.4.10" in result.output
-    assert "Build: 12345" in result.output
-
-
-@patch("iterm2.Connection.async_create")
-@patch("iterm2.async_get_app")
-@patch("iterm2.run_until_complete")
-@patch("os.environ.get")
-@patch("it2.core.connection._connection_manager")
 def test_app_theme(
     mock_conn_mgr,
     mock_env_get,
