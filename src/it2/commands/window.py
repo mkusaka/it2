@@ -27,15 +27,10 @@ async def new(
     profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create new window."""
-    window = await app.async_create_window(profile=profile)
+    window = await iterm2.Window.async_create(connection, profile=profile, command=command)
 
     if window:
         click.echo(f"Created new window: {window.window_id}")
-
-        if command:
-            # Run command in the new window's first session
-            session = window.current_tab.current_session
-            await session.async_send_text(command + "\r")
     else:
         handle_error("Failed to create window")
 

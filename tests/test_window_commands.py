@@ -99,7 +99,6 @@ def mock_app(mock_window):
     app = MagicMock()
     app.windows = [mock_window]
     app.current_terminal_window = mock_window
-    app.async_create_window = AsyncMock(return_value=mock_window)
     app.async_save_window_arrangement = AsyncMock(return_value="test-arrangement")
     app.async_restore_window_arrangement = AsyncMock()
     app.async_list_window_saved_arrangements = AsyncMock(
@@ -110,6 +109,7 @@ def mock_app(mock_window):
 
 
 # Test Window Creation
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -121,6 +121,7 @@ def test_window_new(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
@@ -134,13 +135,18 @@ def test_window_new(
         mock_async_create,
         mock_app,
     )
+    mock_window_create.return_value = mock_window
 
     result = runner.invoke(cli, ["window", "new"])
     assert result.exit_code == 0
     assert "Created new window: test-window-789" in result.output
-    mock_app.async_create_window.assert_called_once_with(profile=None)
+    mock_window_create.assert_called_once()
+    call_kwargs = mock_window_create.call_args
+    assert call_kwargs[1]["profile"] is None
+    assert call_kwargs[1]["command"] is None
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -152,6 +158,7 @@ def test_window_new_with_profile(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
@@ -165,13 +172,16 @@ def test_window_new_with_profile(
         mock_async_create,
         mock_app,
     )
+    mock_window_create.return_value = mock_window
 
     result = runner.invoke(cli, ["window", "new", "--profile", "MyProfile"])
     assert result.exit_code == 0
     assert "Created new window: test-window-789" in result.output
-    mock_app.async_create_window.assert_called_once_with(profile="MyProfile")
+    mock_window_create.assert_called_once()
+    assert mock_window_create.call_args[1]["profile"] == "MyProfile"
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -183,6 +193,7 @@ def test_window_new_with_command(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
@@ -196,13 +207,16 @@ def test_window_new_with_command(
         mock_async_create,
         mock_app,
     )
+    mock_window_create.return_value = mock_window
 
     result = runner.invoke(cli, ["window", "new", "--command", "ls -la"])
     assert result.exit_code == 0
     assert "Created new window: test-window-789" in result.output
-    mock_window.current_tab.current_session.async_send_text.assert_called_once_with("ls -la\r")
+    mock_window_create.assert_called_once()
+    assert mock_window_create.call_args[1]["command"] == "ls -la"
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -214,6 +228,7 @@ def test_window_new_failure(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
 ):
@@ -226,7 +241,7 @@ def test_window_new_failure(
         mock_async_create,
         mock_app,
     )
-    mock_app.async_create_window.return_value = None
+    mock_window_create.return_value = None
 
     result = runner.invoke(cli, ["window", "new"])
     assert result.exit_code == 1
