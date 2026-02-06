@@ -1,7 +1,7 @@
 """Profile commands for iTerm2 CLI."""
 
 import json
-from typing import Optional, Tuple
+from typing import Optional
 
 import click
 import iterm2
@@ -15,7 +15,7 @@ from ..core.errors import handle_error
 console = Console()
 
 
-def _parse_font_string(font_str: str) -> Tuple[str, float]:
+def _parse_font_string(font_str: str) -> tuple[str, float]:
     """Parse font string like 'Monaco 12' into (family, size)."""
     parts = font_str.rsplit(" ", 1)
     if len(parts) == 2:

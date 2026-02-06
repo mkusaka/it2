@@ -1,6 +1,6 @@
 """Application-level commands for iTerm2 CLI."""
 
-from typing import List, Optional
+from typing import Optional
 
 import click
 import iterm2
@@ -95,7 +95,7 @@ async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
 @click.argument("session_ids", nargs=-1, required=True)
 @run_command
 async def broadcast_add(
-    session_ids: List[str], connection: iterm2.Connection, app: iterm2.App
+    session_ids: list[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create broadcast group with specified sessions."""
     # Verify all sessions exist

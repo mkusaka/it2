@@ -2,7 +2,8 @@
 
 import asyncio
 import re
-from typing import Optional, Pattern
+from re import Pattern
+from typing import Optional
 
 import click
 import iterm2

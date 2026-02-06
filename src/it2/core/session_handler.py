@@ -1,14 +1,14 @@
 """Session handling utilities for iTerm2 CLI."""
 
 import sys
-from typing import List, Optional
+from typing import Optional
 
 from iterm2 import App, Session
 
 
 async def get_target_sessions(
     app: App, session_id: Optional[str] = None, all_sessions: bool = False
-) -> List[Session]:
+) -> list[Session]:
     """Get target sessions based on the provided criteria.
 
     Args:

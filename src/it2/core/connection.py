@@ -2,8 +2,9 @@
 
 import os
 import sys
+from collections.abc import Awaitable
 from functools import wraps
-from typing import Any, Awaitable, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 import iterm2
 from iterm2 import App, Connection

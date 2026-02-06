@@ -81,6 +81,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["S101"]  # assert is allowed in tests
 "scripts/*.py" = ["S603"]  # subprocess is allowed in scripts
+"src/it2/commands/session.py" = ["S603"]  # subprocess with hardcoded /usr/bin/pbcopy
 
 [tool.black]
 line-length = 100
