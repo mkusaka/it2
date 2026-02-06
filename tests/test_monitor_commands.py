@@ -162,6 +162,6 @@ def test_monitor_variable_session(
     # VariableMonitor should be called with 4 args:
     # (connection, VariableScopes.SESSION, name, session_id)
     call_args = mock_var_monitor_cls.call_args
-    assert len(call_args[0]) == 4 or len(call_args.args) == 4, (
-        f"Expected 4 positional args to VariableMonitor, got: {call_args}"
-    )
+    assert (
+        len(call_args[0]) == 4 or len(call_args.args) == 4
+    ), f"Expected 4 positional args to VariableMonitor, got: {call_args}"

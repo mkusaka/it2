@@ -130,9 +130,7 @@ async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
 @app.command("theme")
 @click.argument("value", required=False, type=click.Choice(list(_THEME_MAP.keys())))
 @run_command
-async def theme(
-    value: Optional[str], connection: iterm2.Connection, app: iterm2.App
-) -> None:
+async def theme(value: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Show or set iTerm2 theme.
 
     Without VALUE, shows the current theme. With VALUE, sets the theme.
