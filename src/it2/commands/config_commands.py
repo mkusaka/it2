@@ -34,7 +34,11 @@ def register_config_commands(cli: click.Group) -> None:
         if not window:
             handle_error("No current window", 3)
 
-        session = window.current_tab.current_session
+        tab = window.current_tab
+        if not tab:
+            handle_error("No current tab", 3)
+
+        session = tab.current_session
         if not session:
             handle_error("No current session", 3)
 
