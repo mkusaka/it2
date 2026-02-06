@@ -64,7 +64,10 @@ def broadcast() -> None:
 @broadcast.command("on")
 @run_command
 async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Enable input broadcasting to all sessions in current tab."""
+    """Enable input broadcasting to all sessions in current tab.
+
+    Note: This replaces all existing broadcast domains.
+    """
     # Get current window
     window = app.current_terminal_window
     if not window:
@@ -97,7 +100,10 @@ async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
 async def broadcast_add(
     session_ids: list[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
-    """Create broadcast group with specified sessions."""
+    """Create broadcast group with specified sessions.
+
+    Note: This replaces all existing broadcast domains.
+    """
     # Verify all sessions exist
     sessions = []
     for sid in session_ids:

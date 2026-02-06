@@ -30,7 +30,8 @@ class ConnectionManager:
         """Get the iTerm2 app instance."""
         if not self._app:
             await self.connect()
-        assert self._app is not None
+        if self._app is None:
+            raise RuntimeError("Failed to initialize iTerm2 app after connect()")
         return self._app
 
     async def close(self) -> None:

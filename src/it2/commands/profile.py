@@ -16,14 +16,17 @@ console = Console()
 
 
 def _parse_font_string(font_str: str) -> tuple[str, float]:
-    """Parse font string like 'Monaco 12' into (family, size)."""
+    """Parse font string like 'Monaco 12' or 'Monaco 13.5' into (family, size).
+
+    Raises ValueError if the font string cannot be parsed into family and size.
+    """
     parts = font_str.rsplit(" ", 1)
     if len(parts) == 2:
         try:
             return parts[0], float(parts[1])
         except ValueError:
             pass
-    return font_str, 0.0
+    raise ValueError(f"Cannot parse font string: {font_str!r}")
 
 
 @click.group()
@@ -81,7 +84,11 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
     full_profile = await target_profile.async_get_full_profile()
 
     # Parse font string (e.g. "Monaco 12")
-    font_family, font_size = _parse_font_string(full_profile.normal_font)
+    try:
+        font_family, font_size = _parse_font_string(full_profile.normal_font)
+    except ValueError:
+        font_family = full_profile.normal_font
+        font_size = 0.0
 
     # Extract common properties
     profile_data = {

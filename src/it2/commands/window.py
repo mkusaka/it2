@@ -27,7 +27,9 @@ async def new(
     profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create new window."""
-    # async_create defaults are None but typed as str; safe to pass Optional[str]
+    # iterm2 stubs type profile/command as str, but the implementation accepts None.
+    # See iterm2/window.py async_create(): both default to None and are forwarded
+    # to CreateTabRequest which handles None correctly.
     window = await iterm2.Window.async_create(
         connection, profile=profile, command=command  # type: ignore[arg-type]
     )
