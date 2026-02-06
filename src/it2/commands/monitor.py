@@ -195,7 +195,7 @@ async def prompt(session: Optional[str], connection: iterm2.Connection, app: ite
 
 
 @monitor.command("activity")
-@click.option("--all", "-a", is_flag=True, help="Monitor all sessions")
+@click.option("--all", "-a", "all_sessions", is_flag=True, help="Monitor all sessions")
 @run_command
 async def activity(all_sessions: bool, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Monitor session activity."""
