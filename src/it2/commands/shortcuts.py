@@ -27,9 +27,7 @@ def register_shortcuts(cli: click.Group) -> None:
         """Shortcut for 'it2 session run'."""
         from . import session as session_module
 
-        ctx.invoke(
-            session_module.run, command=command, session=session, all_sessions=all_sessions
-        )
+        ctx.invoke(session_module.run, command=command, session=session, all_sessions=all_sessions)
 
     @cli.command("split")
     @click.option("--vertical", "-v", is_flag=True, help="Split vertically")
