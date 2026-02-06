@@ -49,17 +49,19 @@ async def output(
             async with target_session.get_screen_streamer() as streamer:
                 while True:
                     contents = await streamer.async_get()
-                    text = contents.string_ignoring_hard_newlines()
+                    if contents is None:
+                        continue
+                    text_lines = [
+                        contents.line(i).string for i in range(contents.number_of_lines)
+                    ]
+                    text = "\n".join(text_lines)
 
                     if regex:
-                        # Filter lines by pattern
-                        lines = text.split("\n")
-                        matching_lines = [line for line in lines if regex.search(line)]
+                        matching_lines = [ln for ln in text_lines if regex.search(ln)]
                         if matching_lines:
-                            for line in matching_lines:
-                                click.echo(line)
+                            for ln in matching_lines:
+                                click.echo(ln)
                     else:
-                        # Output all new content
                         if text.strip():
                             click.echo(text)
         except KeyboardInterrupt:
@@ -67,14 +69,13 @@ async def output(
     else:
         # Just get current screen contents
         contents = await target_session.async_get_screen_contents()
-        text = contents.string_ignoring_hard_newlines()
+        text_lines = [contents.line(i).string for i in range(contents.number_of_lines)]
+        text = "\n".join(text_lines)
 
         if regex:
-            # Filter lines by pattern
-            lines = text.split("\n")
-            matching_lines = [line for line in lines if regex.search(line)]
-            for line in matching_lines:
-                click.echo(line)
+            matching_lines = [ln for ln in text_lines if regex.search(ln)]
+            for ln in matching_lines:
+                click.echo(ln)
         else:
             click.echo(text)
 
@@ -136,6 +137,7 @@ async def variable(
         # Monitor app-level variable
         click.echo(f"Monitoring app variable '{variable_name}'...")
         scope = iterm2.VariableScopes.APP
+        identifier = None
 
         # Get initial value
         initial_value = await app.async_get_variable(variable_name)
@@ -146,7 +148,8 @@ async def variable(
         target_session = sessions[0]
 
         click.echo(f"Monitoring session variable '{variable_name}'...")
-        scope = target_session
+        scope = iterm2.VariableScopes.SESSION
+        identifier = target_session.session_id
 
         # Get initial value
         initial_value = await target_session.async_get_variable(variable_name)
@@ -155,7 +158,9 @@ async def variable(
     click.echo("Press Ctrl+C to stop")
 
     try:
-        async with iterm2.VariableMonitor(connection, scope, variable_name) as mon:
+        async with iterm2.VariableMonitor(
+            connection, scope, variable_name, identifier
+        ) as mon:
             while True:
                 new_value = await mon.async_get()
                 click.echo(f"Changed to: {new_value}")
@@ -181,18 +186,18 @@ async def prompt(session: Optional[str], connection: iterm2.Connection, app: ite
     click.echo("Press Ctrl+C to stop")
 
     try:
-        async with target_session.get_screen_streamer(want_prompt_notifications=True) as streamer:
+        async with iterm2.PromptMonitor(
+            connection, target_session.session_id
+        ) as mon:
             while True:
-                update = await streamer.async_get()
+                mode, value = await mon.async_get()
 
-                # Check if this is a prompt notification
-                if update.prompt:
-                    # Get command that was just executed
-                    command = await target_session.async_get_variable("user.lastCommand")
-                    if command:
-                        click.echo(f"Command executed: {command}")
-                    else:
-                        click.echo("New prompt detected")
+                if mode == iterm2.PromptMonitor.Mode.PROMPT:
+                    click.echo("New prompt detected")
+                elif mode == iterm2.PromptMonitor.Mode.COMMAND_START:
+                    click.echo(f"Command started: {value}")
+                elif mode == iterm2.PromptMonitor.Mode.COMMAND_END:
+                    click.echo(f"Command finished (exit status: {value})")
     except KeyboardInterrupt:
         click.echo("\nMonitoring stopped")
 
@@ -218,9 +223,15 @@ async def activity(all_sessions: bool, connection: iterm2.Connection, app: iterm
             for window in app.windows:
                 for tab in window.tabs:
                     for session in tab.sessions:
+                        current_window = app.current_terminal_window
+                        current_session = None
+                        if current_window:
+                            current_tab = current_window.current_tab
+                            if current_tab:
+                                current_session = current_tab.current_session
                         if (
                             not all_sessions
-                            and session != app.current_terminal_window.current_tab.current_session
+                            and session != current_session
                         ):
                             continue
 
