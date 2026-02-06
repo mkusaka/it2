@@ -29,12 +29,13 @@ class ConnectionManager:
         """Get the iTerm2 app instance."""
         if not self._app:
             await self.connect()
+        assert self._app is not None
         return self._app
 
     async def close(self) -> None:
         """Close the connection."""
         if self._connection:
-            await self._connection.async_close()
+            # Connection objects close automatically; no async_close method exists
             self._connection = None
             self._app = None
 
@@ -97,7 +98,14 @@ def run_command(func: Callable[..., Awaitable[T]]) -> Any:
             # If external connection fails and we have ITERM2_COOKIE, try internal
             if os.environ.get("ITERM2_COOKIE"):
                 try:
-                    return iterm2.run_until_complete(func(*args, **kwargs))
+
+                    async def _inner(connection: Connection) -> Any:
+                        app = await iterm2.async_get_app(connection)
+                        kwargs["connection"] = connection
+                        kwargs["app"] = app
+                        return await func(*args, **kwargs)
+
+                    return iterm2.run_until_complete(_inner)
                 except Exception:
                     # Both failed, show error
                     print(
