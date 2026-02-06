@@ -26,7 +26,7 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
 ]
 dependencies = [
-    "iterm2>=2.7",
+    "iterm2>=2.13",
     "click>=8.0",
     "PyYAML>=6.0",
     "rich>=10.0",
@@ -87,14 +87,10 @@ line-length = 100
 target-version = ['py38']
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "iterm2.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
