@@ -435,7 +435,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=22.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "click", specifier = ">=8.0" },
-    { name = "iterm2", specifier = ">=2.7" },
+    { name = "iterm2", specifier = ">=2.13" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.20" },
@@ -457,15 +457,15 @@ dev = [
 
 [[package]]
 name = "iterm2"
-version = "2.10"
+version = "2.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/57/6b/98ce521178651fad694c7ed704c882e4ef0b10fecc0a687b4e859ef623c3/iterm2-2.10.tar.gz", hash = "sha256:8c0cf95ffca9f1bf7409883618deee66acd73c63929222e23435780dcc516869", size = 140774, upload-time = "2025-05-08T01:16:53.257Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2b/56/4b11d23db523512eb827ca021b4974885f196ef585b4cd1ba0f17a6996ce/iterm2-2.13.tar.gz", hash = "sha256:bec94392511358d94e7c3f84e31bcc380257cb261856cf7f08a1e4e563d7237e", size = 162970, upload-time = "2025-12-05T19:47:43.01Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/1f/ccd1d509c8fdcaf31ba0a2a15ab9e1086bc513be5aca4ff5ee83b19d22e9/iterm2-2.10-py3-none-any.whl", hash = "sha256:66a59f2737cb9006931bd7fb21d961e0600009c5238f7a75ded4c1e690cd5684", size = 154848, upload-time = "2025-05-08T01:16:51.565Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/10/61d5af7686135a30566de74675b4a2c2626f02d1f529c00c881347f04dc1/iterm2-2.13-py3-none-any.whl", hash = "sha256:164fab5e3d42ab3792d259462aa2bf2d9558f0b762cf7321549da22aee4276cf", size = 177246, upload-time = "2025-12-05T19:47:41.927Z" },
 ]
 
 [[package]]

@@ -25,14 +25,14 @@ Implemented command modules:
 - **Session Commands**: send, run, list, split, close, clear, restart, etc.
 - **Window Commands**: new, list, close, focus, move, resize, fullscreen, arrange
 - **Tab Commands**: new, list, close, select, next, prev, goto, move, set-title
-- **Profile Commands**: list, show, create, apply, delete, export, import
-- **App Commands**: activate, hide, quit, theme, broadcast management
+- **Profile Commands**: list, show, apply, set
+- **App Commands**: activate, hide, quit, version, theme (show/set), get-focus, broadcast management
 - **Monitor Commands**: output, keystroke, variable, prompt tracking
 - **Config Commands**: show path, reload, validate configurations
 
 ### 3. Testing Infrastructure
 
-- **Test Coverage**: 65% (98 passed, 9 skipped)
+- **Test Coverage**: 129 passed, 5 skipped
 - **Test Categories**:
   - Unit tests for all command modules
   - Integration tests for connection handling
@@ -111,7 +111,7 @@ Implemented command modules:
 
 ### 3. Python Version Compatibility
 **Problem**: Initial Python 3.7 target incompatible with modern tooling.
-**Solution**: Upgraded to Python 3.8+ while maintaining broad compatibility.
+**Solution**: Upgraded to Python 3.9+ while maintaining broad compatibility.
 
 ## Future Enhancements
 

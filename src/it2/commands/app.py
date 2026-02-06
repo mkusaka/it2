@@ -1,12 +1,23 @@
 """Application-level commands for iTerm2 CLI."""
 
-from typing import List
+from typing import List, Optional
 
 import click
 import iterm2
 
 from ..core.connection import run_command
 from ..core.errors import handle_error
+
+# Theme value mapping for PreferenceKey.THEME
+_THEME_MAP = {
+    "light": 0,
+    "dark": 1,
+    "light-hc": 2,
+    "dark-hc": 3,
+    "automatic": 4,
+    "minimal": 5,
+}
+_THEME_NAMES = {v: k for k, v in _THEME_MAP.items()}
 
 # Re-usable menu item identifiers
 _MENU_HIDE = "Hide iTerm2"
@@ -105,12 +116,36 @@ async def broadcast_add(
     click.echo(f"Created broadcast group with {len(sessions)} sessions")
 
 
-@app.command("theme")
+@app.command("version")
 @run_command
-async def theme(connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Show current iTerm2 theme."""
-    attributes = await app.async_get_theme()
-    click.echo(f"Current theme: {', '.join(attributes)}")
+async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
+    """Show iTerm2 version."""
+    ver = await iterm2.async_get_preference(connection, iterm2.PreferenceKey.ITERM_VERSION)
+    if ver:
+        click.echo(f"iTerm2 version: {ver}")
+    else:
+        click.echo("iTerm2 version: unknown")
+
+
+@app.command("theme")
+@click.argument("value", required=False, type=click.Choice(list(_THEME_MAP.keys())))
+@run_command
+async def theme(
+    value: Optional[str], connection: iterm2.Connection, app: iterm2.App
+) -> None:
+    """Show or set iTerm2 theme.
+
+    Without VALUE, shows the current theme. With VALUE, sets the theme.
+    """
+    if value is None:
+        # Show current theme
+        attributes = await app.async_get_theme()
+        click.echo(f"Current theme: {', '.join(attributes)}")
+    else:
+        # Set theme
+        theme_int = _THEME_MAP[value]
+        await iterm2.async_set_preference(connection, iterm2.PreferenceKey.THEME, theme_int)
+        click.echo(f"Theme set to: {value}")
 
 
 @app.command("get-focus")

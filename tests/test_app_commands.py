@@ -314,6 +314,105 @@ def test_app_broadcast_off(
     mock_set_broadcast.assert_called_once()
 
 
+@patch("iterm2.async_get_preference", new_callable=AsyncMock)
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_app_version(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_get_preference,
+    runner,
+    mock_app,
+):
+    """Test app version command."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    mock_get_preference.return_value = "3.6.6"
+
+    result = runner.invoke(cli, ["app", "version"])
+    assert result.exit_code == 0
+    assert "iTerm2 version: 3.6.6" in result.output
+    mock_get_preference.assert_called_once()
+
+
+@patch("iterm2.async_get_preference", new_callable=AsyncMock)
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_app_version_unknown(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_get_preference,
+    runner,
+    mock_app,
+):
+    """Test app version command when version is not available."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    mock_get_preference.return_value = None
+
+    result = runner.invoke(cli, ["app", "version"])
+    assert result.exit_code == 0
+    assert "iTerm2 version: unknown" in result.output
+
+
+@patch("iterm2.async_set_preference", new_callable=AsyncMock)
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_app_theme_set(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_set_preference,
+    runner,
+    mock_app,
+):
+    """Test app theme set command."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    result = runner.invoke(cli, ["app", "theme", "dark"])
+    assert result.exit_code == 0
+    assert "Theme set to: dark" in result.output
+    mock_set_preference.assert_called_once()
+
+
 def test_app_command_no_cookie(runner):
     """Test app command without iTerm2 cookie."""
     with patch("os.environ.get", return_value=None), patch(
