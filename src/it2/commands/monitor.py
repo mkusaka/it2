@@ -51,9 +51,7 @@ async def output(
                     contents = await streamer.async_get()
                     if contents is None:
                         continue
-                    text_lines = [
-                        contents.line(i).string for i in range(contents.number_of_lines)
-                    ]
+                    text_lines = [contents.line(i).string for i in range(contents.number_of_lines)]
                     text = "\n".join(text_lines)
 
                     if regex:
@@ -158,9 +156,7 @@ async def variable(
     click.echo("Press Ctrl+C to stop")
 
     try:
-        async with iterm2.VariableMonitor(
-            connection, scope, variable_name, identifier
-        ) as mon:
+        async with iterm2.VariableMonitor(connection, scope, variable_name, identifier) as mon:
             while True:
                 new_value = await mon.async_get()
                 click.echo(f"Changed to: {new_value}")
@@ -186,9 +182,7 @@ async def prompt(session: Optional[str], connection: iterm2.Connection, app: ite
     click.echo("Press Ctrl+C to stop")
 
     try:
-        async with iterm2.PromptMonitor(
-            connection, target_session.session_id
-        ) as mon:
+        async with iterm2.PromptMonitor(connection, target_session.session_id) as mon:
             while True:
                 mode, value = await mon.async_get()
 
@@ -229,10 +223,7 @@ async def activity(all_sessions: bool, connection: iterm2.Connection, app: iterm
                             current_tab = current_window.current_tab
                             if current_tab:
                                 current_session = current_tab.current_session
-                        if (
-                            not all_sessions
-                            and session != current_session
-                        ):
+                        if not all_sessions and session != current_session:
                             continue
 
                         # Get session activity indicator

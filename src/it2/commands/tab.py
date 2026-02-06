@@ -113,8 +113,11 @@ async def list_tabs(
         for data in tabs_data:
             active = "✓" if data["is_active"] else ""
             table.add_row(
-                str(data["id"]), str(data["window_id"]), str(data["index"]),
-                str(data["sessions"]), active,
+                str(data["id"]),
+                str(data["window_id"]),
+                str(data["index"]),
+                str(data["sessions"]),
+                active,
             )
 
         console.print(table)
@@ -213,9 +216,7 @@ async def select(
 @tab.command()
 @click.argument("tab_id", required=False)
 @run_command
-async def move(
-    tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
-) -> None:
+async def move(tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
     """Move tab to its own new window."""
     if tab_id:
         # Find specific tab

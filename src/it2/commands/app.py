@@ -1,6 +1,6 @@
 """Application-level commands for iTerm2 CLI."""
 
-from typing import List, Optional
+from typing import List
 
 import click
 import iterm2
