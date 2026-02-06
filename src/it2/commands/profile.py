@@ -166,7 +166,20 @@ async def apply(
 async def set_property(
     name: str, property_name: str, value: str, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
-    """Set profile property."""
+    """Set profile property.
+
+    \b
+    Supported properties:
+      font-size         Font size (e.g. "13.5")
+      font-family       Font family name (e.g. "Monaco")
+      bg-color          Background color as hex (e.g. "#1a1a1a")
+      fg-color          Foreground color as hex (e.g. "#c7c8c9")
+      transparency      Window transparency, 0.0-1.0
+      blur              Enable blur, "true" or "false"
+      cursor-color      Cursor color as hex (e.g. "#bbbbbb")
+      selection-color   Selection color as hex (e.g. "#1a0133")
+      badge-text        Badge text
+    """
     # Find profile by name
     profiles = await iterm2.PartialProfile.async_query(connection)
     target_profile = None
@@ -189,7 +202,7 @@ async def set_property(
             await full_profile.async_set_normal_font(f"{font_family} {value}")
         elif property_name == "font-family":
             _, font_size = _parse_font_string(full_profile.normal_font)
-            await full_profile.async_set_normal_font(f"{value} {int(font_size)}")
+            await full_profile.async_set_normal_font(f"{value} {font_size}")
         elif property_name == "bg-color":
             await full_profile.async_set_background_color(_parse_color(value))
         elif property_name == "fg-color":
