@@ -1,7 +1,7 @@
 """Profile commands for iTerm2 CLI."""
 
 import json
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 import iterm2
@@ -13,6 +13,17 @@ from ..core.connection import run_command
 from ..core.errors import handle_error
 
 console = Console()
+
+
+def _parse_font_string(font_str: str) -> Tuple[str, float]:
+    """Parse font string like 'Monaco 12' into (family, size)."""
+    parts = font_str.rsplit(" ", 1)
+    if len(parts) == 2:
+        try:
+            return parts[0], float(parts[1])
+        except ValueError:
+            pass
+    return font_str, 0.0
 
 
 @click.group()
@@ -69,12 +80,15 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
     # Get full profile
     full_profile = await target_profile.async_get_full_profile()
 
+    # Parse font string (e.g. "Monaco 12")
+    font_family, font_size = _parse_font_string(full_profile.normal_font)
+
     # Extract common properties
     profile_data = {
         "guid": full_profile.guid,
         "name": full_profile.name,
         "font": full_profile.normal_font,
-        "font_size": full_profile.normal_font.size,
+        "font_size": font_size,
         "background_color": str(full_profile.background_color),
         "foreground_color": str(full_profile.foreground_color),
         "transparency": full_profile.transparency,
@@ -89,7 +103,7 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
     else:
         rprint(f"[bold]Profile: {full_profile.name}[/bold]")
         rprint(f"GUID: {full_profile.guid}")
-        rprint(f"Font: {full_profile.normal_font.family} {full_profile.normal_font.size}pt")
+        rprint(f"Font: {font_family} {font_size}pt")
         rprint(f"Background: {full_profile.background_color}")
         rprint(f"Foreground: {full_profile.foreground_color}")
         rprint(f"Transparency: {full_profile.transparency}")
@@ -98,48 +112,6 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
         rprint(f"Selection Color: {full_profile.selection_color}")
         if full_profile.badge_text:
             rprint(f"Badge Text: {full_profile.badge_text}")
-
-
-@profile.command()
-@click.argument("name")
-@click.option("--base", "-b", help="Base profile to copy from")
-@run_command
-async def create(
-    name: str, base: Optional[str], connection: iterm2.Connection, app: iterm2.App
-) -> None:
-    """Create new profile."""
-    # Get profiles
-    profiles = await iterm2.PartialProfile.async_query(connection)
-
-    # Check if profile already exists
-    for p in profiles:
-        if p.name == name:
-            handle_error(f"Profile '{name}' already exists", 4)
-
-    if base:
-        # Find base profile
-        base_profile = None
-        for p in profiles:
-            if p.name == base:
-                base_profile = p
-                break
-
-        if not base_profile:
-            handle_error(f"Base profile '{base}' not found", 3)
-
-        # Get full base profile
-        full_base = await base_profile.async_get_full_profile()
-
-        # Create new profile based on base
-        new_profile = await iterm2.Profile.async_create(connection, name, full_base.all_properties)
-    else:
-        # Create new profile with defaults
-        new_profile = await iterm2.Profile.async_create(connection, name, {})
-
-    if new_profile:
-        click.echo(f"Created profile: {name}")
-    else:
-        handle_error("Failed to create profile")
 
 
 @profile.command()
@@ -210,28 +182,35 @@ async def set_property(
     # Get full profile
     full_profile = await target_profile.async_get_full_profile()
 
-    # Map common property names to actual properties
-    property_map = {
-        "font-size": lambda v: setattr(full_profile.normal_font, "size", float(v)),
-        "font-family": lambda v: setattr(full_profile.normal_font, "family", v),
-        "bg-color": lambda v: setattr(full_profile, "background_color", _parse_color(v)),
-        "fg-color": lambda v: setattr(full_profile, "foreground_color", _parse_color(v)),
-        "transparency": lambda v: setattr(full_profile, "transparency", float(v)),
-        "blur": lambda v: setattr(full_profile, "blur", v.lower() == "true"),
-        "cursor-color": lambda v: setattr(full_profile, "cursor_color", _parse_color(v)),
-        "selection-color": lambda v: setattr(full_profile, "selection_color", _parse_color(v)),
-        "badge-text": lambda v: setattr(full_profile, "badge_text", v),
-    }
+    # Map property names to async_set_* calls on the full profile
+    try:
+        if property_name == "font-size":
+            font_family, _ = _parse_font_string(full_profile.normal_font)
+            await full_profile.async_set_normal_font(f"{font_family} {value}")
+        elif property_name == "font-family":
+            _, font_size = _parse_font_string(full_profile.normal_font)
+            await full_profile.async_set_normal_font(f"{value} {int(font_size)}")
+        elif property_name == "bg-color":
+            await full_profile.async_set_background_color(_parse_color(value))
+        elif property_name == "fg-color":
+            await full_profile.async_set_foreground_color(_parse_color(value))
+        elif property_name == "transparency":
+            await full_profile.async_set_transparency(float(value))
+        elif property_name == "blur":
+            await full_profile.async_set_blur(value.lower() == "true")
+        elif property_name == "cursor-color":
+            await full_profile.async_set_cursor_color(_parse_color(value))
+        elif property_name == "selection-color":
+            await full_profile.async_set_selection_color(_parse_color(value))
+        elif property_name == "badge-text":
+            await full_profile.async_set_badge_text(value)
+        else:
+            handle_error(f"Unknown property: {property_name}", 4)
+            return
 
-    if property_name in property_map:
-        try:
-            property_map[property_name](value)
-            await full_profile.async_save()
-            click.echo(f"Set {property_name} = {value} for profile '{name}'")
-        except Exception as e:
-            handle_error(f"Failed to set property: {e}", 4)
-    else:
-        handle_error(f"Unknown property: {property_name}", 4)
+        click.echo(f"Set {property_name} = {value} for profile '{name}'")
+    except Exception as e:
+        handle_error(f"Failed to set property: {e}", 4)
 
 
 def _parse_color(color_str: str) -> iterm2.Color:
@@ -240,10 +219,10 @@ def _parse_color(color_str: str) -> iterm2.Color:
     if color_str.startswith("#"):
         color_str = color_str[1:]
 
-    # Parse hex color
+    # Parse hex color (Color takes int 0-255)
     if len(color_str) == 6:
-        r = int(color_str[0:2], 16) / 255.0
-        g = int(color_str[2:4], 16) / 255.0
-        b = int(color_str[4:6], 16) / 255.0
+        r = int(color_str[0:2], 16)
+        g = int(color_str[2:4], 16)
+        b = int(color_str[4:6], 16)
         return iterm2.Color(r, g, b)
     raise ValueError(f"Invalid color format: {color_str}")
