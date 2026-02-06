@@ -66,7 +66,7 @@ def mock_tab():
     tab.tab_id = "test-tab-456"
     tab.async_select = AsyncMock()
     tab.async_close = AsyncMock()
-    tab.async_move_to_window_index = AsyncMock()
+    tab.async_move_to_window = AsyncMock()
 
     # Create mock session
     session = MagicMock()
