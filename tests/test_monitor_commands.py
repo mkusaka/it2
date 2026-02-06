@@ -165,3 +165,135 @@ def test_monitor_variable_session(
     assert (
         len(call_args[0]) == 4 or len(call_args.args) == 4
     ), f"Expected 4 positional args to VariableMonitor, got: {call_args}"
+
+
+@patch("iterm2.KeystrokeMonitor")
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_monitor_keystroke(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_keystroke_monitor_cls,
+    runner,
+    mock_app,
+    mock_session,
+):
+    """Test monitor keystroke uses KeystrokeMonitor with session filter."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    # Create a mock keystroke with .characters property
+    mock_keystroke = MagicMock()
+    mock_keystroke.characters = "a"
+
+    # First call returns keystroke, second raises KeyboardInterrupt
+    mock_mon = AsyncMock()
+    mock_mon.async_get = AsyncMock(side_effect=[mock_keystroke, KeyboardInterrupt])
+    mock_mon.__aenter__ = AsyncMock(return_value=mock_mon)
+    mock_mon.__aexit__ = AsyncMock(return_value=False)
+    mock_keystroke_monitor_cls.return_value = mock_mon
+
+    result = runner.invoke(cli, ["monitor", "keystroke"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Keystroke: a" in result.output
+
+    # KeystrokeMonitor should be called with session= kwarg
+    call_kwargs = mock_keystroke_monitor_cls.call_args[1]
+    assert call_kwargs.get("session") == "test-session-123"
+
+
+@patch("iterm2.KeystrokeMonitor")
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_monitor_keystroke_with_pattern(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_keystroke_monitor_cls,
+    runner,
+    mock_app,
+    mock_session,
+):
+    """Test monitor keystroke with regex pattern filters output."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    # Create mock keystrokes: "a" matches pattern, "1" does not
+    ks_a = MagicMock()
+    ks_a.characters = "a"
+    ks_1 = MagicMock()
+    ks_1.characters = "1"
+
+    mock_mon = AsyncMock()
+    mock_mon.async_get = AsyncMock(side_effect=[ks_a, ks_1, KeyboardInterrupt])
+    mock_mon.__aenter__ = AsyncMock(return_value=mock_mon)
+    mock_mon.__aexit__ = AsyncMock(return_value=False)
+    mock_keystroke_monitor_cls.return_value = mock_mon
+
+    result = runner.invoke(cli, ["monitor", "keystroke", "-p", "^[a-z]$"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Keystroke: a" in result.output
+    assert "Keystroke: 1" not in result.output
+
+
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_monitor_output_with_pattern(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    runner,
+    mock_app,
+    mock_session,
+):
+    """Test monitor output with pattern filters lines."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    line0 = MagicMock()
+    line0.string = "INFO: all good"
+    line1 = MagicMock()
+    line1.string = "ERROR: something failed"
+    contents = MagicMock()
+    contents.number_of_lines = 2
+    contents.line = MagicMock(side_effect=lambda i: [line0, line1][i])
+    mock_session.async_get_screen_contents = AsyncMock(return_value=contents)
+
+    result = runner.invoke(cli, ["monitor", "output", "-p", "ERROR"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "ERROR: something failed" in result.output
+    assert "INFO: all good" not in result.output

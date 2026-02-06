@@ -1179,8 +1179,9 @@ def test_tab_goto_window_not_found(
 # Test without iTerm2 cookie
 def test_tab_command_no_cookie(runner):
     """Test tab command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None), patch(
-        "iterm2.Connection.async_create", side_effect=Exception("Connection failed")
+    with (
+        patch("os.environ.get", return_value=None),
+        patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")),
     ):
         result = runner.invoke(cli, ["tab", "new"])
         assert result.exit_code == 2

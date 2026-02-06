@@ -101,19 +101,16 @@ async def keystroke(
     click.echo("Press Ctrl+C to stop")
 
     try:
-        async with iterm2.KeystrokeMonitor(connection) as mon:
+        async with iterm2.KeystrokeMonitor(connection, session=target_session.session_id) as mon:
             while True:
                 keystroke = await mon.async_get()
+                key_str = keystroke.characters
 
-                # Check if this keystroke is in our target session
-                if keystroke.session == target_session.session_id:
-                    key_str = str(keystroke.keystrokes)
-
-                    if regex:
-                        if regex.search(key_str):
-                            click.echo(f"Keystroke: {key_str}")
-                    else:
+                if regex:
+                    if regex.search(key_str):
                         click.echo(f"Keystroke: {key_str}")
+                else:
+                    click.echo(f"Keystroke: {key_str}")
     except KeyboardInterrupt:
         click.echo("\nMonitoring stopped")
 

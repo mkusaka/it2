@@ -17,7 +17,6 @@ _THEME_MAP = {
     "automatic": 4,
     "minimal": 5,
 }
-_THEME_NAMES = {v: k for k, v in _THEME_MAP.items()}
 
 # Re-usable menu item identifiers
 _MENU_HIDE = "Hide iTerm2"
