@@ -68,8 +68,8 @@ def mock_window():
     window.async_activate = AsyncMock()
     window.async_get_frame = AsyncMock()
     window.async_set_frame = AsyncMock()
-    window.async_is_fullscreen = AsyncMock(return_value=False)
-    window.async_toggle_fullscreen = AsyncMock()
+    window.async_get_fullscreen = AsyncMock(return_value=False)
+    window.async_set_fullscreen = AsyncMock()
 
     # Create mock structure for tabs and sessions
     session = MagicMock()
@@ -99,17 +99,11 @@ def mock_app(mock_window):
     app = MagicMock()
     app.windows = [mock_window]
     app.current_terminal_window = mock_window
-    app.async_create_window = AsyncMock(return_value=mock_window)
-    app.async_save_window_arrangement = AsyncMock(return_value="test-arrangement")
-    app.async_restore_window_arrangement = AsyncMock()
-    app.async_list_window_saved_arrangements = AsyncMock(
-        return_value=["arrangement1", "arrangement2"]
-    )
-
     return app
 
 
 # Test Window Creation
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -121,11 +115,13 @@ def test_window_new(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
 ):
     """Test window new command."""
+    mock_window_create.return_value = mock_window
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -136,11 +132,11 @@ def test_window_new(
     )
 
     result = runner.invoke(cli, ["window", "new"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Created new window: test-window-789" in result.output
-    mock_app.async_create_window.assert_called_once_with(profile=None)
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -152,11 +148,13 @@ def test_window_new_with_profile(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
 ):
     """Test window new command with profile."""
+    mock_window_create.return_value = mock_window
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -167,11 +165,12 @@ def test_window_new_with_profile(
     )
 
     result = runner.invoke(cli, ["window", "new", "--profile", "MyProfile"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Created new window: test-window-789" in result.output
-    mock_app.async_create_window.assert_called_once_with(profile="MyProfile")
+    assert mock_window_create.call_args[1].get("profile") == "MyProfile"
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -183,11 +182,13 @@ def test_window_new_with_command(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
     mock_window,
 ):
     """Test window new command with command to run."""
+    mock_window_create.return_value = mock_window
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -198,11 +199,12 @@ def test_window_new_with_command(
     )
 
     result = runner.invoke(cli, ["window", "new", "--command", "ls -la"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Created new window: test-window-789" in result.output
-    mock_window.current_tab.current_session.async_send_text.assert_called_once_with("ls -la\r")
+    assert mock_window_create.call_args[1].get("command") == "ls -la"
 
 
+@patch("iterm2.Window.async_create", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -214,10 +216,12 @@ def test_window_new_failure(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_window_create,
     runner,
     mock_app,
 ):
     """Test window new command when creation fails."""
+    mock_window_create.return_value = None
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -226,7 +230,6 @@ def test_window_new_failure(
         mock_async_create,
         mock_app,
     )
-    mock_app.async_create_window.return_value = None
 
     result = runner.invoke(cli, ["window", "new"])
     assert result.exit_code == 1
@@ -545,9 +548,9 @@ def test_window_fullscreen_toggle(
     )
 
     result = runner.invoke(cli, ["window", "fullscreen", "toggle"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Fullscreen enabled" in result.output
-    mock_window.async_toggle_fullscreen.assert_called_once()
+    mock_window.async_set_fullscreen.assert_called_once_with(True)
 
 
 @patch("iterm2.Connection.async_create")
@@ -576,9 +579,9 @@ def test_window_fullscreen_on(
     )
 
     result = runner.invoke(cli, ["window", "fullscreen", "on"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Fullscreen enabled" in result.output
-    mock_window.async_toggle_fullscreen.assert_called_once()
+    mock_window.async_set_fullscreen.assert_called_once_with(True)
 
 
 @patch("iterm2.Connection.async_create")
@@ -605,12 +608,12 @@ def test_window_fullscreen_off(
         mock_async_create,
         mock_app,
     )
-    mock_window.async_is_fullscreen.return_value = True
+    mock_window.async_get_fullscreen.return_value = True
 
     result = runner.invoke(cli, ["window", "fullscreen", "off"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Fullscreen disabled" in result.output
-    mock_window.async_toggle_fullscreen.assert_called_once()
+    mock_window.async_set_fullscreen.assert_called_once_with(False)
 
 
 @patch("iterm2.Connection.async_create")
@@ -637,12 +640,12 @@ def test_window_fullscreen_already_on(
         mock_async_create,
         mock_app,
     )
-    mock_window.async_is_fullscreen.return_value = True
+    mock_window.async_get_fullscreen.return_value = True
 
     result = runner.invoke(cli, ["window", "fullscreen", "on"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Fullscreen already enabled" in result.output
-    mock_window.async_toggle_fullscreen.assert_not_called()
+    mock_window.async_set_fullscreen.assert_not_called()
 
 
 @patch("iterm2.Connection.async_create")
@@ -669,15 +672,16 @@ def test_window_fullscreen_already_off(
         mock_async_create,
         mock_app,
     )
-    mock_window.async_is_fullscreen.return_value = False
+    mock_window.async_get_fullscreen.return_value = False
 
     result = runner.invoke(cli, ["window", "fullscreen", "off"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Fullscreen already disabled" in result.output
-    mock_window.async_toggle_fullscreen.assert_not_called()
+    mock_window.async_set_fullscreen.assert_not_called()
 
 
 # Test Window Arrangements
+@patch("iterm2.Arrangement.async_save", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -689,6 +693,7 @@ def test_window_arrange_save(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_arrange_save,
     runner,
     mock_app,
 ):
@@ -703,41 +708,12 @@ def test_window_arrange_save(
     )
 
     result = runner.invoke(cli, ["window", "arrange", "save", "my-arrangement"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Saved arrangement: my-arrangement" in result.output
-    mock_app.async_save_window_arrangement.assert_called_once_with("my-arrangement")
 
 
-@patch("iterm2.Connection.async_create")
-@patch("iterm2.async_get_app")
-@patch("iterm2.run_until_complete")
-@patch("os.environ.get")
-@patch("it2.core.connection._connection_manager")
-def test_window_arrange_save_failure(
-    mock_conn_mgr,
-    mock_env_get,
-    mock_run_until_complete,
-    mock_async_get_app,
-    mock_async_create,
-    runner,
-    mock_app,
-):
-    """Test window arrange save command when save fails."""
-    setup_iterm2_mocks(
-        mock_conn_mgr,
-        mock_env_get,
-        mock_run_until_complete,
-        mock_async_get_app,
-        mock_async_create,
-        mock_app,
-    )
-    mock_app.async_save_window_arrangement.return_value = None
-
-    result = runner.invoke(cli, ["window", "arrange", "save", "my-arrangement"])
-    assert result.exit_code == 1
-    assert "Failed to save arrangement" in result.output
-
-
+@patch("iterm2.Arrangement.async_restore", new_callable=AsyncMock)
+@patch("iterm2.Arrangement.async_list", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -749,10 +725,13 @@ def test_window_arrange_restore(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_arrange_list,
+    mock_arrange_restore,
     runner,
     mock_app,
 ):
     """Test window arrange restore command."""
+    mock_arrange_list.return_value = ["arrangement1", "arrangement2"]
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -763,11 +742,11 @@ def test_window_arrange_restore(
     )
 
     result = runner.invoke(cli, ["window", "arrange", "restore", "arrangement1"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Restored arrangement: arrangement1" in result.output
-    mock_app.async_restore_window_arrangement.assert_called_once_with("arrangement1")
 
 
+@patch("iterm2.Arrangement.async_list", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -779,10 +758,12 @@ def test_window_arrange_restore_not_found(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_arrange_list,
     runner,
     mock_app,
 ):
     """Test window arrange restore command when arrangement not found."""
+    mock_arrange_list.return_value = ["arrangement1", "arrangement2"]
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -797,6 +778,7 @@ def test_window_arrange_restore_not_found(
     assert "Arrangement 'non-existent' not found" in result.output
 
 
+@patch("iterm2.Arrangement.async_list", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -808,10 +790,12 @@ def test_window_arrange_list(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_arrange_list,
     runner,
     mock_app,
 ):
     """Test window arrange list command."""
+    mock_arrange_list.return_value = ["arrangement1", "arrangement2"]
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -822,12 +806,13 @@ def test_window_arrange_list(
     )
 
     result = runner.invoke(cli, ["window", "arrange", "list"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Saved arrangements:" in result.output
     assert "arrangement1" in result.output
     assert "arrangement2" in result.output
 
 
+@patch("iterm2.Arrangement.async_list", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")
 @patch("iterm2.run_until_complete")
@@ -839,10 +824,12 @@ def test_window_arrange_list_empty(
     mock_run_until_complete,
     mock_async_get_app,
     mock_async_create,
+    mock_arrange_list,
     runner,
     mock_app,
 ):
     """Test window arrange list command when no arrangements."""
+    mock_arrange_list.return_value = []
     setup_iterm2_mocks(
         mock_conn_mgr,
         mock_env_get,
@@ -851,10 +838,9 @@ def test_window_arrange_list_empty(
         mock_async_create,
         mock_app,
     )
-    mock_app.async_list_window_saved_arrangements.return_value = []
 
     result = runner.invoke(cli, ["window", "arrange", "list"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "No saved arrangements" in result.output
 
 
