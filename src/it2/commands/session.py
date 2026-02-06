@@ -180,15 +180,17 @@ async def read(
     # Get screen contents
     contents = await target_session.async_get_screen_contents()
 
+    # Extract lines from ScreenContents using line(i).string
+    text_lines = [contents.line(i).string for i in range(contents.number_of_lines)]
+
     if lines is not None:
         # Get last N lines
-        text_lines = contents.string_lines_ignoring_hard_newlines()
         output_lines = text_lines[-lines:] if lines < len(text_lines) else text_lines
         for line in output_lines:
             click.echo(line)
     else:
         # Output all content
-        click.echo(contents.string_ignoring_hard_newlines())
+        click.echo("\n".join(text_lines))
 
 
 @session.command("copy")
@@ -245,15 +247,20 @@ async def capture(
     target_session = sessions[0]
 
     if history:
-        # Get contents including history
-        contents = await target_session.async_get_contents()
+        # Get contents including scrollback history
+        line_info = await target_session.async_get_line_info()
+        first_line = line_info.overflow
+        total_lines = line_info.scrollback_buffer_height + line_info.mutable_area_height
+        line_contents = await target_session.async_get_contents(first_line, total_lines)
+        text_lines = [lc.string for lc in line_contents]
     else:
         # Get only visible contents
         contents = await target_session.async_get_screen_contents()
+        text_lines = [contents.line(i).string for i in range(contents.number_of_lines)]
 
     # Write to file
     with open(output, "w") as f:
-        f.write(contents.string_ignoring_hard_newlines())
+        f.write("\n".join(text_lines))
 
     click.echo(f"Screen captured to: {output}")
 

@@ -7,7 +7,7 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 - **Session Management**: Send text, execute commands, split panes, manage sessions
 - **Window Control**: Create, move, resize, and manage windows
 - **Tab Operations**: Create and navigate between tabs
-- **Profile Management**: List, create, and apply iTerm2 profiles
+- **Profile Management**: List, show, and apply iTerm2 profiles
 - **Broadcasting**: Send input to multiple sessions simultaneously
 - **Monitoring**: Watch session output, keystrokes, and variables in real-time
 - **Configuration**: Define custom profiles and aliases in YAML
@@ -16,7 +16,7 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 ## Requirements
 
 - macOS with iTerm2 3.3.0 or later
-- Python 3.8+
+- Python 3.9+
 - iTerm2 Python API enabled (Preferences > General > Magic > Enable Python API)
 
 ## Installation
@@ -121,7 +121,6 @@ it2 tab goto 2             # go to tab by index
 # Profile management
 it2 profile list           # list all profiles
 it2 profile show "Default" # show profile details
-it2 profile create "MyProfile" --base "Default"
 it2 profile apply "MyProfile"
 
 # Profile configuration
@@ -136,7 +135,9 @@ it2 profile set "MyProfile" transparency 0.9
 # App management
 it2 app activate           # bring iTerm2 to front
 it2 app hide               # hide iTerm2
-it2 app theme dark         # set theme
+it2 app version            # show iTerm2 version
+it2 app theme              # show current theme
+it2 app theme dark         # set theme (light, dark, light-hc, dark-hc, automatic, minimal)
 
 # Broadcasting
 it2 app broadcast on       # enable broadcasting
@@ -157,7 +158,7 @@ it2 monitor keystroke -p "^[a-z]+$"        # filter by regex
 
 # Monitor variables
 it2 monitor variable lastCommand           # session variable
-it2 monitor variable buildNumber --app     # app variable
+it2 monitor variable effectiveTheme --app  # app variable
 
 # Monitor prompts (requires shell integration)
 it2 monitor prompt

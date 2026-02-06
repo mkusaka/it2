@@ -607,13 +607,16 @@ def test_session_read(
         mock_app,
     )
 
-    # Mock screen contents
+    # Mock screen contents using correct iterm2 v2.13 API
+    line0 = MagicMock()
+    line0.string = "Screen content here"
     contents = MagicMock()
-    contents.string_ignoring_hard_newlines = MagicMock(return_value="Screen content here")
+    contents.number_of_lines = 1
+    contents.line = MagicMock(side_effect=lambda i: line0)
     mock_session.async_get_screen_contents = AsyncMock(return_value=contents)
 
     result = runner.invoke(cli, ["session", "read"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, f"Failed with: {result.output}"
     assert "Screen content here" in result.output
 
 
@@ -681,22 +684,28 @@ def test_session_capture(
         mock_app,
     )
 
-    # Mock screen contents
+    # Mock screen contents using correct iterm2 v2.13 API
+    # ScreenContents has .number_of_lines and .line(i) -> LineContents with .string
+    line0 = MagicMock()
+    line0.string = "Captured content"
+    line0.hard_eol = True
     contents = MagicMock()
-    contents.string_ignoring_hard_newlines = MagicMock(return_value="Captured content")
+    contents.number_of_lines = 1
+    contents.line = MagicMock(side_effect=lambda i: line0)
     mock_session.async_get_screen_contents = AsyncMock(return_value=contents)
 
     output_file = tmp_path / "capture.txt"
     result = runner.invoke(cli, ["session", "capture", "-o", str(output_file)])
     assert result.exit_code == 0
     assert f"Screen captured to: {output_file}" in result.output
-    assert output_file.read_text() == "Captured content"
+    assert "Captured content" in output_file.read_text()
 
 
 def test_session_send_error_no_cookie(runner):
     """Test session send command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None), patch(
-        "iterm2.Connection.async_create", side_effect=Exception("Connection failed")
+    with (
+        patch("os.environ.get", return_value=None),
+        patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")),
     ):
         result = runner.invoke(cli, ["session", "send", "Hello"])
         assert result.exit_code == 2

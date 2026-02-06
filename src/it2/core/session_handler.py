@@ -1,14 +1,14 @@
 """Session handling utilities for iTerm2 CLI."""
 
 import sys
-from typing import List, Optional
+from typing import Optional
 
 from iterm2 import App, Session
 
 
 async def get_target_sessions(
     app: App, session_id: Optional[str] = None, all_sessions: bool = False
-) -> List[Session]:
+) -> list[Session]:
     """Get target sessions based on the provided criteria.
 
     Args:
@@ -36,11 +36,19 @@ async def get_target_sessions(
         return [session]
 
     # Get active session (default)
-    session = app.current_terminal_window.current_tab.current_session
-    if not session:
+    current_window = app.current_terminal_window
+    if not current_window:
+        print("Error: No active window found", file=sys.stderr)
+        sys.exit(3)
+    current_tab = current_window.current_tab
+    if not current_tab:
+        print("Error: No active tab found", file=sys.stderr)
+        sys.exit(3)
+    current_session = current_tab.current_session
+    if not current_session:
         print("Error: No active session found", file=sys.stderr)
         sys.exit(3)
-    return [session]
+    return [current_session]
 
 
 async def get_session_info(session: Session) -> dict:

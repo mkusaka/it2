@@ -56,7 +56,8 @@ async def new(
         if command:
             # Run command in the new tab's session
             session = tab.current_session
-            await session.async_send_text(command + "\r")
+            if session:
+                await session.async_send_text(command + "\r")
     else:
         handle_error("Failed to create tab")
 
@@ -112,7 +113,11 @@ async def list_tabs(
         for data in tabs_data:
             active = "✓" if data["is_active"] else ""
             table.add_row(
-                data["id"], data["window_id"], str(data["index"]), str(data["sessions"]), active
+                str(data["id"]),
+                str(data["window_id"]),
+                str(data["index"]),
+                str(data["sessions"]),
+                active,
             )
 
         console.print(table)
@@ -141,11 +146,11 @@ async def close(
             handle_error(f"Tab '{tab_id}' not found", 3)
     else:
         # Use current tab
-        window = app.current_terminal_window
-        if not window:
+        current_window = app.current_terminal_window
+        if not current_window:
             handle_error("No current window", 3)
 
-        target_tab = window.current_tab
+        target_tab = current_window.current_tab
         if not target_tab:
             handle_error("No current tab", 3)
 
@@ -209,22 +214,17 @@ async def select(
 
 
 @tab.command()
-@click.argument("index", type=int)
 @click.argument("tab_id", required=False)
 @run_command
-async def move(
-    index: int, tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
-) -> None:
-    """Move tab to index."""
+async def move(tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+    """Move tab to its own new window."""
     if tab_id:
         # Find specific tab
         target_tab = None
-        target_window = None
         for window in app.windows:
-            for tab in window.tabs:
-                if tab.tab_id == tab_id:
-                    target_tab = tab
-                    target_window = window
+            for t in window.tabs:
+                if t.tab_id == tab_id:
+                    target_tab = t
                     break
             if target_tab:
                 break
@@ -241,9 +241,9 @@ async def move(
         if not target_tab:
             handle_error("No current tab", 3)
 
-    # Move tab to new index
-    await target_tab.async_move_to_window_index(index)
-    click.echo(f"Moved tab to index {index}")
+    # Move tab to its own new window
+    await target_tab.async_move_to_window()
+    click.echo("Moved tab to new window")
 
 
 @tab.command("next")

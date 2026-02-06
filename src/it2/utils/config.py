@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 import yaml
@@ -13,7 +13,7 @@ class Config:
 
     def __init__(self) -> None:
         self.config_path = self._get_config_path()
-        self.config: Dict[str, Any] = {}
+        self.config: dict[str, Any] = {}
         self.load()
 
     def _get_config_path(self) -> Path:
@@ -38,7 +38,7 @@ class Config:
         else:
             self.config = {}
 
-    def get_profile(self, name: str) -> Optional[List[Dict[str, Any]]]:
+    def get_profile(self, name: str) -> Optional[list[dict[str, Any]]]:
         """Get a custom profile by name."""
         profiles = self.config.get("profiles", {})
         result = profiles.get(name)
@@ -50,12 +50,12 @@ class Config:
         result = aliases.get(name)
         return result if isinstance(result, str) else None
 
-    def get_all_profiles(self) -> Dict[str, List[Dict[str, Any]]]:
+    def get_all_profiles(self) -> dict[str, list[dict[str, Any]]]:
         """Get all custom profiles."""
         result = self.config.get("profiles", {})
         return result if isinstance(result, dict) else {}
 
-    def get_all_aliases(self) -> Dict[str, str]:
+    def get_all_aliases(self) -> dict[str, str]:
         """Get all aliases."""
         result = self.config.get("aliases", {})
         return result if isinstance(result, dict) else {}

@@ -1,12 +1,26 @@
 """Application-level commands for iTerm2 CLI."""
 
-from typing import List, Optional
+from typing import Optional
 
 import click
 import iterm2
 
 from ..core.connection import run_command
 from ..core.errors import handle_error
+
+# Theme value mapping for PreferenceKey.THEME
+_THEME_MAP = {
+    "light": 0,
+    "dark": 1,
+    "light-hc": 2,
+    "dark-hc": 3,
+    "automatic": 4,
+    "minimal": 5,
+}
+
+# Re-usable menu item identifiers
+_MENU_HIDE = "Hide iTerm2"
+_MENU_QUIT = "Quit iTerm2"
 
 
 @click.group()
@@ -26,7 +40,7 @@ async def activate(connection: iterm2.Connection, app: iterm2.App) -> None:
 @run_command
 async def hide(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Hide iTerm2."""
-    await app.async_hide()
+    await iterm2.MainMenu.async_select_menu_item(connection, _MENU_HIDE)
     click.echo("iTerm2 hidden")
 
 
@@ -38,12 +52,7 @@ async def quit_app(force: bool, connection: iterm2.Connection, app: iterm2.App) 
     if not force:
         click.confirm("Quit iTerm2?", abort=True)
 
-    # Note: This will close the connection and exit the script
-    await connection.async_send_notification(
-        iterm2.api_pb2.ClientOriginatedMessage.Notification(
-            terminate_app_request=iterm2.api_pb2.TerminateAppRequest()
-        )
-    )
+    await iterm2.MainMenu.async_select_menu_item(connection, _MENU_QUIT)
     click.echo("iTerm2 quit command sent")
 
 
@@ -55,7 +64,10 @@ def broadcast() -> None:
 @broadcast.command("on")
 @run_command
 async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Enable input broadcasting to all sessions."""
+    """Enable input broadcasting to all sessions in current tab.
+
+    Note: This replaces all existing broadcast domains.
+    """
     # Get current window
     window = app.current_terminal_window
     if not window:
@@ -66,7 +78,11 @@ async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
     if not tab:
         handle_error("No current tab", 3)
 
-    await tab.async_set_broadcast_domains(["all"])
+    domain = iterm2.BroadcastDomain()
+    for s in tab.sessions:
+        domain.add_session(s)
+
+    await iterm2.async_set_broadcast_domains(connection, [domain])
     click.echo("Broadcasting enabled for current tab")
 
 
@@ -74,17 +90,7 @@ async def broadcast_on(connection: iterm2.Connection, app: iterm2.App) -> None:
 @run_command
 async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
     """Disable input broadcasting."""
-    # Get current window
-    window = app.current_terminal_window
-    if not window:
-        handle_error("No current window", 3)
-
-    # Disable broadcasting for current tab
-    tab = window.current_tab
-    if not tab:
-        handle_error("No current tab", 3)
-
-    await tab.async_set_broadcast_domains([])
+    await iterm2.async_set_broadcast_domains(connection, [])
     click.echo("Broadcasting disabled")
 
 
@@ -92,9 +98,12 @@ async def broadcast_off(connection: iterm2.Connection, app: iterm2.App) -> None:
 @click.argument("session_ids", nargs=-1, required=True)
 @run_command
 async def broadcast_add(
-    session_ids: List[str], connection: iterm2.Connection, app: iterm2.App
+    session_ids: list[str], connection: iterm2.Connection, app: iterm2.App
 ) -> None:
-    """Create broadcast group with specified sessions."""
+    """Create broadcast group with specified sessions.
+
+    Note: This replaces all existing broadcast domains.
+    """
     # Verify all sessions exist
     sessions = []
     for sid in session_ids:
@@ -103,57 +112,43 @@ async def broadcast_add(
             handle_error(f"Session '{sid}' not found", 3)
         sessions.append(session)
 
-    # Create a unique broadcast domain
-    domain = f"custom_{'-'.join(session_ids[:3])}"
-
-    # Set broadcast domain for all specified sessions
+    # Create a broadcast domain with the specified sessions
+    domain = iterm2.BroadcastDomain()
     for session in sessions:
-        await session.async_set_broadcast_domains([domain])
+        domain.add_session(session)
 
+    await iterm2.async_set_broadcast_domains(connection, [domain])
     click.echo(f"Created broadcast group with {len(sessions)} sessions")
 
 
 @app.command("version")
 @run_command
 async def version(connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Show iTerm2 version information."""
-    # Get version info
-    build_number = await app.async_get_variable("buildNumber")
-    version_number = await app.async_get_variable("version")
-
-    click.echo(f"iTerm2 version: {version_number}")
-    click.echo(f"Build: {build_number}")
+    """Show iTerm2 version."""
+    ver = await iterm2.async_get_preference(connection, iterm2.PreferenceKey.ITERM_VERSION)
+    if ver:
+        click.echo(f"iTerm2 version: {ver}")
+    else:
+        click.echo("iTerm2 version: unknown")
 
 
 @app.command("theme")
-@click.argument("theme", type=click.Choice(["light", "dark", "auto"]))
+@click.argument("value", required=False, type=click.Choice(list(_THEME_MAP.keys())))
 @run_command
-async def theme(theme: str, connection: iterm2.Connection, app: iterm2.App) -> None:
-    """Set iTerm2 theme."""
-    theme_map = {
-        "light": iterm2.Theme.LIGHT,
-        "dark": iterm2.Theme.DARK,
-        "auto": iterm2.Theme.AUTO,
-    }
+async def theme(value: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+    """Show or set iTerm2 theme.
 
-    await app.async_set_theme(theme_map[theme])
-    click.echo(f"Theme set to: {theme}")
-
-
-@app.command("create-hotkey-window")
-@click.option("--profile", "-p", help="Profile to use")
-@run_command
-async def create_hotkey_window(
-    profile: Optional[str], connection: iterm2.Connection, app: iterm2.App
-) -> None:
-    """Create a hotkey window."""
-    window = await iterm2.HotkeyWindow.async_create(connection, profile=profile)
-
-    if window:
-        click.echo("Created hotkey window")
-        click.echo("Configure hotkey in: Preferences > Keys > Hotkey Window")
+    Without VALUE, shows the current theme. With VALUE, sets the theme.
+    """
+    if value is None:
+        # Show current theme
+        attributes = await app.async_get_theme()
+        click.echo(f"Current theme: {', '.join(attributes)}")
     else:
-        handle_error("Failed to create hotkey window")
+        # Set theme
+        theme_int = _THEME_MAP[value]
+        await iterm2.async_set_preference(connection, iterm2.PreferenceKey.THEME, theme_int)
+        click.echo(f"Theme set to: {value}")
 
 
 @app.command("get-focus")

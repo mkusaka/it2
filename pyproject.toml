@@ -26,7 +26,7 @@ classifiers = [
     "Operating System :: MacOS :: MacOS X",
 ]
 dependencies = [
-    "iterm2>=2.7",
+    "iterm2>=2.13",
     "click>=8.0",
     "PyYAML>=6.0",
     "rich>=10.0",
@@ -64,7 +64,7 @@ dev = [
 ]
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 100
 
 [tool.ruff.lint]
@@ -81,20 +81,17 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["S101"]  # assert is allowed in tests
 "scripts/*.py" = ["S603"]  # subprocess is allowed in scripts
+"src/it2/commands/session.py" = ["S603"]  # subprocess with hardcoded /usr/bin/pbcopy
 
 [tool.black]
 line-length = 100
-target-version = ['py38']
+target-version = ['py39']
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "iterm2.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

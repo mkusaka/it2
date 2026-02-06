@@ -66,7 +66,7 @@ def mock_tab():
     tab.tab_id = "test-tab-456"
     tab.async_select = AsyncMock()
     tab.async_close = AsyncMock()
-    tab.async_move_to_window_index = AsyncMock()
+    tab.async_move_to_window = AsyncMock()
 
     # Create mock session
     session = MagicMock()
@@ -768,10 +768,10 @@ def test_tab_move_current(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "2"])
-    assert result.exit_code == 0
-    assert "Moved tab to index 2" in result.output
-    mock_tab.async_move_to_window_index.assert_called_once_with(2)
+    result = runner.invoke(cli, ["tab", "move"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Moved tab to new window" in result.output
+    mock_tab.async_move_to_window.assert_called_once()
 
 
 @patch("iterm2.Connection.async_create")
@@ -799,10 +799,10 @@ def test_tab_move_specific(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "1", "test-tab-456"])
-    assert result.exit_code == 0
-    assert "Moved tab to index 1" in result.output
-    mock_tab.async_move_to_window_index.assert_called_once_with(1)
+    result = runner.invoke(cli, ["tab", "move", "test-tab-456"])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Moved tab to new window" in result.output
+    mock_tab.async_move_to_window.assert_called_once()
 
 
 @patch("iterm2.Connection.async_create")
@@ -829,7 +829,7 @@ def test_tab_move_tab_not_found(
         mock_app,
     )
 
-    result = runner.invoke(cli, ["tab", "move", "1", "non-existent"])
+    result = runner.invoke(cli, ["tab", "move", "non-existent"])
     assert result.exit_code == 3
     assert "Tab 'non-existent' not found" in result.output
 
@@ -859,7 +859,7 @@ def test_tab_move_no_current_window(
     )
     mock_app.current_terminal_window = None
 
-    result = runner.invoke(cli, ["tab", "move", "1"])
+    result = runner.invoke(cli, ["tab", "move"])
     assert result.exit_code == 3
     assert "No current window" in result.output
 
@@ -1179,8 +1179,9 @@ def test_tab_goto_window_not_found(
 # Test without iTerm2 cookie
 def test_tab_command_no_cookie(runner):
     """Test tab command without iTerm2 cookie."""
-    with patch("os.environ.get", return_value=None), patch(
-        "iterm2.Connection.async_create", side_effect=Exception("Connection failed")
+    with (
+        patch("os.environ.get", return_value=None),
+        patch("iterm2.Connection.async_create", side_effect=Exception("Connection failed")),
     ):
         result = runner.invoke(cli, ["tab", "new"])
         assert result.exit_code == 2
