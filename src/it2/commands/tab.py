@@ -1,7 +1,6 @@
 """Tab commands for iTerm2 CLI."""
 
 import json
-from typing import Optional
 
 import click
 import iterm2
@@ -25,9 +24,9 @@ def tab() -> None:
 @click.option("--command", "-c", help="Command to run in new tab")
 @run_command
 async def new(
-    profile: Optional[str],
-    window: Optional[str],
-    command: Optional[str],
+    profile: str | None,
+    window: str | None,
+    command: str | None,
     connection: iterm2.Connection,
     app: iterm2.App,
 ) -> None:
@@ -67,7 +66,7 @@ async def new(
 @click.option("--window", "-w", help="Window ID to list tabs from")
 @run_command
 async def list_tabs(
-    as_json: bool, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    as_json: bool, window: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """List all tabs."""
     tabs_data = []
@@ -128,7 +127,7 @@ async def list_tabs(
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
 async def close(
-    tab_id: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
+    tab_id: str | None, force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Close tab."""
     if tab_id:
@@ -166,7 +165,7 @@ async def close(
 @click.option("--window", "-w", help="Window ID (for index-based selection)")
 @run_command
 async def select(
-    tab_id_or_index: str, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    tab_id_or_index: str, window: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Select tab by ID or index."""
     try:
@@ -216,7 +215,7 @@ async def select(
 @tab.command()
 @click.argument("tab_id", required=False)
 @run_command
-async def move(tab_id: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+async def move(tab_id: str | None, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Move tab to its own new window."""
     if tab_id:
         # Find specific tab
@@ -293,7 +292,7 @@ async def prev(connection: iterm2.Connection, app: iterm2.App) -> None:
 @click.option("--window", "-w", help="Window ID (default: current)")
 @run_command
 async def goto(
-    index: int, window: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    index: int, window: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Go to tab by index."""
     if window:

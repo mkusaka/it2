@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import click
 import yaml
@@ -38,13 +38,13 @@ class Config:
         else:
             self.config = {}
 
-    def get_profile(self, name: str) -> Optional[list[dict[str, Any]]]:
+    def get_profile(self, name: str) -> list[dict[str, Any]] | None:
         """Get a custom profile by name."""
         profiles = self.config.get("profiles", {})
         result = profiles.get(name)
         return result if isinstance(result, list) else None
 
-    def get_alias(self, name: str) -> Optional[str]:
+    def get_alias(self, name: str) -> str | None:
         """Get an alias command by name."""
         aliases = self.config.get("aliases", {})
         result = aliases.get(name)
