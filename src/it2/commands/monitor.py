@@ -3,7 +3,6 @@
 import asyncio
 import re
 from re import Pattern
-from typing import Optional
 
 import click
 import iterm2
@@ -25,8 +24,8 @@ def monitor() -> None:
 @run_command
 async def output(
     follow: bool,
-    session: Optional[str],
-    pattern: Optional[str],
+    session: str | None,
+    pattern: str | None,
     connection: iterm2.Connection,
     app: iterm2.App,
 ) -> None:
@@ -35,7 +34,7 @@ async def output(
     target_session = sessions[0]
 
     # Compile pattern if provided
-    regex: Optional[Pattern] = None
+    regex: Pattern | None = None
     if pattern:
         try:
             regex = re.compile(pattern)
@@ -84,14 +83,14 @@ async def output(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
 async def keystroke(
-    pattern: Optional[str], session: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    pattern: str | None, session: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Monitor keystrokes."""
     sessions = await get_target_sessions(app, session)
     target_session = sessions[0]
 
     # Compile pattern if provided
-    regex: Optional[Pattern] = None
+    regex: Pattern | None = None
     if pattern:
         try:
             regex = re.compile(pattern)
@@ -123,7 +122,7 @@ async def keystroke(
 @run_command
 async def variable(
     variable_name: str,
-    session: Optional[str],
+    session: str | None,
     app_level: bool,
     connection: iterm2.Connection,
     app: iterm2.App,
@@ -165,7 +164,7 @@ async def variable(
 @monitor.command()
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-async def prompt(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+async def prompt(session: str | None, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Monitor shell prompts (requires shell integration)."""
     sessions = await get_target_sessions(app, session)
     target_session = sessions[0]

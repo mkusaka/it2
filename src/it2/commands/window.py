@@ -1,7 +1,6 @@
 """Window commands for iTerm2 CLI."""
 
 import json
-from typing import Optional
 
 import click
 import iterm2
@@ -24,7 +23,7 @@ def window() -> None:
 @click.option("--command", "-c", help="Command to run in new window")
 @run_command
 async def new(
-    profile: Optional[str], command: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    profile: str | None, command: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Create new window."""
     # iterm2 library bug: async_create signature is `profile: str = None` instead
@@ -84,7 +83,7 @@ async def list_windows(as_json: bool, connection: iterm2.Connection, app: iterm2
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
 async def close(
-    window_id: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
+    window_id: str | None, force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Close window."""
     if window_id:
@@ -134,7 +133,7 @@ async def focus(window_id: str, connection: iterm2.Connection, app: iterm2.App) 
 @click.argument("window_id", required=False)
 @run_command
 async def move(
-    x: int, y: int, window_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    x: int, y: int, window_id: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Move window to position."""
     if window_id:
@@ -164,7 +163,7 @@ async def move(
 async def resize(
     width: int,
     height: int,
-    window_id: Optional[str],
+    window_id: str | None,
     connection: iterm2.Connection,
     app: iterm2.App,
 ) -> None:
@@ -194,7 +193,7 @@ async def resize(
 @click.argument("window_id", required=False)
 @run_command
 async def fullscreen(
-    state: str, window_id: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    state: str, window_id: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Toggle fullscreen mode."""
     if window_id:

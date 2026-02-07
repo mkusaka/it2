@@ -333,7 +333,7 @@ it2/
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+GPLv2+ License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
