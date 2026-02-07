@@ -106,6 +106,7 @@ core-metadata-version = "2.3"  # twine 6.x does not fully support metadata 2.4 (
 include = [
     "/src",
 ]
+core-metadata-version = "2.3"  # twine 6.x does not fully support metadata 2.4 (license-file validation fails)
 
 [tool.hatch.metadata]
 allow-direct-references = true
