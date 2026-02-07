@@ -2,5 +2,26 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:best-practices"
+  ],
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["tool.uv.dev-dependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies"
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchDepTypes": ["project.optional-dependencies"],
+      "matchJsonata": ["managerData.depGroup = 'dev'"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dev dependencies"
+    },
+    {
+      "matchManagers": ["pep621"],
+      "matchPackageNames": ["python"],
+      "dependencyDashboardApproval": true
+    }
   ]
 }
