@@ -1,6 +1,5 @@
 """Application-level commands for iTerm2 CLI."""
 
-
 import click
 import iterm2
 
