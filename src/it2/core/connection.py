@@ -2,9 +2,9 @@
 
 import os
 import sys
-from collections.abc import Awaitable
+from collections.abc import Awaitable, Callable
 from functools import wraps
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 import iterm2
 from iterm2 import App, Connection
@@ -16,8 +16,8 @@ class ConnectionManager:
     """Manages the connection to iTerm2."""
 
     def __init__(self) -> None:
-        self._connection: Optional[Connection] = None
-        self._app: Optional[App] = None
+        self._connection: Connection | None = None
+        self._app: App | None = None
 
     async def connect(self) -> Connection:
         """Establish connection to iTerm2."""

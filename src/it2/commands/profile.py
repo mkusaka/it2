@@ -1,7 +1,6 @@
 """Profile commands for iTerm2 CLI."""
 
 import json
-from typing import Optional
 
 import click
 import iterm2
@@ -126,7 +125,7 @@ async def show(name: str, as_json: bool, connection: iterm2.Connection, app: ite
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
 async def apply(
-    name: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    name: str, session: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Apply profile to current session."""
     # Find profile by name

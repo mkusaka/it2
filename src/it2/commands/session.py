@@ -1,7 +1,6 @@
 """Session commands for iTerm2 CLI."""
 
 import json
-from typing import Optional
 
 import click
 import iterm2
@@ -27,7 +26,7 @@ def session() -> None:
 @run_command
 async def send(
     text: str,
-    session: Optional[str],
+    session: str | None,
     all_sessions: bool,
     connection: iterm2.Connection,
     app: iterm2.App,
@@ -49,7 +48,7 @@ async def send(
 @run_command
 async def run(
     command: str,
-    session: Optional[str],
+    session: str | None,
     all_sessions: bool,
     connection: iterm2.Connection,
     app: iterm2.App,
@@ -103,8 +102,8 @@ async def list_sessions(as_json: bool, connection: iterm2.Connection, app: iterm
 @run_command
 async def split(
     vertical: bool,
-    session: Optional[str],
-    profile: Optional[str],
+    session: str | None,
+    profile: str | None,
     connection: iterm2.Connection,
     app: iterm2.App,
 ) -> None:
@@ -128,7 +127,7 @@ async def split(
 @click.option("--force", "-f", is_flag=True, help="Force close without confirmation")
 @run_command
 async def close(
-    session: Optional[str], force: bool, connection: iterm2.Connection, app: iterm2.App
+    session: str | None, force: bool, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Close session."""
     sessions = await get_target_sessions(app, session)
@@ -144,7 +143,7 @@ async def close(
 @session.command("restart")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-async def restart(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+async def restart(session: str | None, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Restart session."""
     sessions = await get_target_sessions(app, session)
     target_session = sessions[0]
@@ -171,7 +170,7 @@ async def focus(session_id: str, connection: iterm2.Connection, app: iterm2.App)
 @click.option("--lines", "-n", type=int, help="Number of lines to read")
 @run_command
 async def read(
-    session: Optional[str], lines: Optional[int], connection: iterm2.Connection, app: iterm2.App
+    session: str | None, lines: int | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Display screen contents."""
     sessions = await get_target_sessions(app, session)
@@ -196,7 +195,7 @@ async def read(
 @session.command("copy")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-async def copy(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+async def copy(session: str | None, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Copy selection to clipboard."""
     sessions = await get_target_sessions(app, session)
     target_session = sessions[0]
@@ -219,7 +218,7 @@ async def copy(session: Optional[str], connection: iterm2.Connection, app: iterm
 @session.command("clear")
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
-async def clear(session: Optional[str], connection: iterm2.Connection, app: iterm2.App) -> None:
+async def clear(session: str | None, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Clear screen."""
     sessions = await get_target_sessions(app, session)
 
@@ -236,7 +235,7 @@ async def clear(session: Optional[str], connection: iterm2.Connection, app: iter
 @click.option("--history", is_flag=True, help="Include scrollback history")
 @run_command
 async def capture(
-    session: Optional[str],
+    session: str | None,
     output: str,
     history: bool,
     connection: iterm2.Connection,
@@ -270,7 +269,7 @@ async def capture(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
 async def set_name(
-    name: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    name: str, session: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Set session name."""
     sessions = await get_target_sessions(app, session)
@@ -285,7 +284,7 @@ async def set_name(
 @click.option("--session", "-s", help="Target session ID (default: active)")
 @run_command
 async def get_var(
-    variable: str, session: Optional[str], connection: iterm2.Connection, app: iterm2.App
+    variable: str, session: str | None, connection: iterm2.Connection, app: iterm2.App
 ) -> None:
     """Get session variable value."""
     sessions = await get_target_sessions(app, session)
@@ -306,7 +305,7 @@ async def get_var(
 async def set_var(
     variable: str,
     value: str,
-    session: Optional[str],
+    session: str | None,
     connection: iterm2.Connection,
     app: iterm2.App,
 ) -> None:
