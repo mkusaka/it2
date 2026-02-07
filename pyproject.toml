@@ -111,7 +111,7 @@ allow-direct-references = true
 
 [dependency-groups]
 dev = [
-    "build>=1.2.2.post1",
+    "build>=1.4.0",
     "pytest-timeout>=2.4.0",
 ]
 
