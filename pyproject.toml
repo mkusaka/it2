@@ -109,11 +109,6 @@ include = [
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[tool.uv]
-constraint-dependencies = [
-    "protobuf<6",  # protobuf 6.x has "Metaclasses with custom tp_new" error on Python 3.14
-]
-
 [dependency-groups]
 dev = [
     "build>=1.2.2.post1",
