@@ -100,6 +100,7 @@ addopts = "-v"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/it2"]
+core-metadata-version = "2.3"  # twine 6.x does not fully support metadata 2.4 (license-file validation fails)
 
 [tool.hatch.build.targets.sdist]
 include = [
