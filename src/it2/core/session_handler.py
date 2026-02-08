@@ -11,7 +11,17 @@ _TERMID_RE = re.compile(rf"^w\d+t\d+p\d+\.(?P<uuid>{_UUID_PATTERN})$")
 
 
 def normalize_session_id(session_id: str | None) -> str | None:
-    """Normalize session ID aliases to a canonical UUID when possible."""
+    """Normalize session ID aliases to a canonical UUID when possible.
+
+    Why this exists:
+      iTerm2 APIs like ``app.get_session_by_id`` expect a bare UUID, but users
+      and shell environments often provide aliases such as ``ITERM_SESSION_ID``
+      (``w0t0p0:UUID``) or termid-like values (``w0t0p0.UUID``).
+
+    When this is needed:
+      Use this before any session lookup that accepts user-provided IDs
+      (CLI arguments, environment-derived values, clipboard-pasted IDs).
+    """
     if session_id is None:
         return None
 
@@ -30,7 +40,11 @@ def normalize_session_id(session_id: str | None) -> str | None:
 
 
 def get_session_by_id(app: App, session_id: str | None) -> Session | None:
-    """Get session by ID, accepting UUID and iTerm session ID formats."""
+    """Get a session by ID while accepting common iTerm2 alias formats.
+
+    This centralizes lookup behavior so command handlers do not each need to
+    remember which ID shape is accepted by iTerm2's Python API.
+    """
     if session_id is None:
         return None
 
