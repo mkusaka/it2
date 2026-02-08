@@ -10,6 +10,7 @@ from rich.table import Table
 
 from ..core.connection import run_command
 from ..core.errors import handle_error
+from ..core.session_handler import get_session_by_id
 
 console = Console()
 
@@ -142,7 +143,7 @@ async def apply(
 
     # Get target session
     if session:
-        target_session = app.get_session_by_id(session)
+        target_session = get_session_by_id(app, session)
         if not target_session:
             handle_error(f"Session '{session}' not found", 3)
     else:

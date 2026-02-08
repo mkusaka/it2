@@ -4,7 +4,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from it2.core.session_handler import find_session_by_name, get_session_info, get_target_sessions
+from it2.core.session_handler import (
+    find_session_by_name,
+    get_session_info,
+    get_target_sessions,
+    normalize_session_id,
+)
 
 
 @pytest.mark.asyncio
@@ -48,6 +53,48 @@ async def test_get_target_sessions_specific():
     assert len(sessions) == 1
     assert sessions[0] == target_session
     mock_app.get_session_by_id.assert_called_once_with("target-session")
+
+
+@pytest.mark.asyncio
+async def test_get_target_sessions_specific_iterm_session_id():
+    """Test getting specific session by ITERM_SESSION_ID format."""
+    mock_app = MagicMock()
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    iterm_session_id = f"w0t1p2:{uuid}"
+    target_session = MagicMock(session_id=uuid)
+
+    def lookup(session_id):
+        if session_id == uuid:
+            return target_session
+        return None
+
+    mock_app.get_session_by_id = MagicMock(side_effect=lookup)
+
+    sessions = await get_target_sessions(mock_app, session_id=iterm_session_id)
+    assert len(sessions) == 1
+    assert sessions[0] == target_session
+    mock_app.get_session_by_id.assert_called_once_with(uuid)
+
+
+@pytest.mark.asyncio
+async def test_get_target_sessions_specific_termid():
+    """Test getting specific session by termid format."""
+    mock_app = MagicMock()
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    termid = f"w0t1p2.{uuid}"
+    target_session = MagicMock(session_id=uuid)
+
+    def lookup(session_id):
+        if session_id == uuid:
+            return target_session
+        return None
+
+    mock_app.get_session_by_id = MagicMock(side_effect=lookup)
+
+    sessions = await get_target_sessions(mock_app, session_id=termid)
+    assert len(sessions) == 1
+    assert sessions[0] == target_session
+    mock_app.get_session_by_id.assert_called_once_with(uuid)
 
 
 @pytest.mark.asyncio
@@ -125,3 +172,14 @@ async def test_find_session_by_name():
     # Test not found
     not_found = await find_session_by_name(mock_app, "Non-existent")
     assert not_found is None
+
+
+def test_normalize_session_id():
+    """Test session ID normalization helper."""
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    assert normalize_session_id(uuid) == uuid
+    assert normalize_session_id(f"w0t1p2:{uuid}") == uuid
+    assert normalize_session_id(f"w0t1p2.{uuid}") == uuid
+    assert normalize_session_id("active") == "active"
+    assert normalize_session_id("all") == "all"
+    assert normalize_session_id(None) is None

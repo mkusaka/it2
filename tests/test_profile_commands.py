@@ -178,6 +178,49 @@ def test_profile_show(
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
+def test_profile_apply_iterm_session_id(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_query,
+    runner,
+    mock_app,
+):
+    """Test profile apply accepts ITERM_SESSION_ID format."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+    profile = MagicMock()
+    profile.name = "Default"
+    mock_query.return_value = [profile]
+
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    iterm_session_id = f"w0t1p2:{uuid}"
+    target_session = mock_app.current_terminal_window.current_tab.current_session
+    mock_app.get_session_by_id = MagicMock(
+        side_effect=lambda sid: target_session if sid == uuid else None
+    )
+
+    result = runner.invoke(cli, ["profile", "apply", "Default", "--session", iterm_session_id])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Applied profile 'Default' to session" in result.output
+    mock_app.get_session_by_id.assert_called_once_with(uuid)
+    target_session.async_set_profile.assert_called_once_with(profile)
+
+
+@patch("iterm2.PartialProfile.async_query")
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
 def test_profile_set_font_size(
     mock_conn_mgr,
     mock_env_get,

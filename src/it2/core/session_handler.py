@@ -1,8 +1,51 @@
 """Session handling utilities for iTerm2 CLI."""
 
+import re
 import sys
 
 from iterm2 import App, Session
+
+_UUID_PATTERN = r"[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
+_ITERM_SESSION_ID_RE = re.compile(rf"^w\d+t\d+p\d+:(?P<uuid>{_UUID_PATTERN})$")
+_TERMID_RE = re.compile(rf"^w\d+t\d+p\d+\.(?P<uuid>{_UUID_PATTERN})$")
+
+
+def normalize_session_id(session_id: str | None) -> str | None:
+    """Normalize session ID aliases to a canonical UUID when possible."""
+    if session_id is None:
+        return None
+
+    if session_id in {"active", "all"}:
+        return session_id
+
+    match = _ITERM_SESSION_ID_RE.match(session_id)
+    if match:
+        return match.group("uuid")
+
+    match = _TERMID_RE.match(session_id)
+    if match:
+        return match.group("uuid")
+
+    return session_id
+
+
+def get_session_by_id(app: App, session_id: str | None) -> Session | None:
+    """Get session by ID, accepting UUID and iTerm session ID formats."""
+    if session_id is None:
+        return None
+
+    normalized = normalize_session_id(session_id)
+    if normalized is None:
+        return None
+
+    session = app.get_session_by_id(normalized)
+    if session:
+        return session
+
+    # Fallback for unexpected future formats where normalization is too strict.
+    if normalized != session_id:
+        return app.get_session_by_id(session_id)
+    return None
 
 
 async def get_target_sessions(
@@ -28,7 +71,7 @@ async def get_target_sessions(
 
     if session_id and session_id != "active":
         # Get specific session by ID
-        session = app.get_session_by_id(session_id)
+        session = get_session_by_id(app, session_id)
         if not session:
             print(f"Error: Session '{session_id}' not found", file=sys.stderr)
             sys.exit(3)
