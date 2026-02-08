@@ -483,7 +483,9 @@ def test_session_focus_iterm_session_id(
     )
     uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
     iterm_session_id = f"w0t1p2:{uuid}"
-    mock_app.get_session_by_id = MagicMock(side_effect=lambda sid: mock_session if sid == uuid else None)
+    mock_app.get_session_by_id = MagicMock(
+        side_effect=lambda sid: mock_session if sid == uuid else None
+    )
 
     result = runner.invoke(cli, ["session", "focus", iterm_session_id])
     assert result.exit_code == 0
