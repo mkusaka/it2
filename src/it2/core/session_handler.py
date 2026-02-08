@@ -1,8 +1,73 @@
 """Session handling utilities for iTerm2 CLI."""
 
+import re
 import sys
 
 from iterm2 import App, Session
+
+_UUID_PATTERN = r"[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
+# iTerm2 commonly exposes these aliases:
+# - ITERM_SESSION_ID / TERM_SESSION_ID: w<window>t<tab>p<pane>:<GUID>
+# - session.termid variable:            w<window>t<tab>p<pane>.<GUID>
+# Only the GUID portion is the canonical API session identifier.
+_ITERM_SESSION_ID_RE = re.compile(rf"^w\d+t\d+p\d+:(?P<uuid>{_UUID_PATTERN})$")
+_TERMID_RE = re.compile(rf"^w\d+t\d+p\d+\.(?P<uuid>{_UUID_PATTERN})$")
+
+
+def normalize_session_id(session_id: str | None) -> str | None:
+    """Normalize session ID aliases to a canonical UUID when possible.
+
+    Why this exists:
+      iTerm2 core builds ``ITERM_SESSION_ID`` in the form
+      ``w<window>t<tab>p<pane>:<guid>`` (see PTYSession.sessionId), and also
+      publishes ``session.termid`` as ``w<window>t<tab>p<pane>.<guid>``.
+      However, iTerm2's Python API stores ``Session.session_id`` as only the
+      GUID and ``App.get_session_by_id`` does an exact string match against that
+      GUID. Passing prefixed aliases directly therefore fails lookup.
+
+    When this is needed:
+      Any time we accept user-provided session identifiers (CLI args, env vars,
+      script output), because those inputs often come from shell integration
+      variables instead of the bare API GUID.
+    """
+    if session_id is None:
+        return None
+
+    if session_id in {"active", "all"}:
+        return session_id
+
+    match = _ITERM_SESSION_ID_RE.match(session_id)
+    if match:
+        return match.group("uuid")
+
+    match = _TERMID_RE.match(session_id)
+    if match:
+        return match.group("uuid")
+
+    return session_id
+
+
+def get_session_by_id(app: App, session_id: str | None) -> Session | None:
+    """Get a session by ID while accepting common iTerm2 alias formats.
+
+    This centralizes the ID-shape mismatch between shell-facing identifiers and
+    API-facing identifiers so command handlers can call one safe lookup path.
+    """
+    if session_id is None:
+        return None
+
+    normalized = normalize_session_id(session_id)
+    if normalized is None:
+        return None
+
+    session = app.get_session_by_id(normalized)
+    if session:
+        return session
+
+    # Fallback for unexpected future formats where normalization is too strict.
+    if normalized != session_id:
+        return app.get_session_by_id(session_id)
+    return None
 
 
 async def get_target_sessions(
@@ -28,7 +93,7 @@ async def get_target_sessions(
 
     if session_id and session_id != "active":
         # Get specific session by ID
-        session = app.get_session_by_id(session_id)
+        session = get_session_by_id(app, session_id)
         if not session:
             print(f"Error: Session '{session_id}' not found", file=sys.stderr)
             sys.exit(3)

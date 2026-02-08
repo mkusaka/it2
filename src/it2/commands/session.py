@@ -9,7 +9,7 @@ from rich.table import Table
 
 from ..core.connection import run_command
 from ..core.errors import handle_error
-from ..core.session_handler import get_session_info, get_target_sessions
+from ..core.session_handler import get_session_by_id, get_session_info, get_target_sessions
 
 console = Console()
 
@@ -157,7 +157,7 @@ async def restart(session: str | None, connection: iterm2.Connection, app: iterm
 @run_command
 async def focus(session_id: str, connection: iterm2.Connection, app: iterm2.App) -> None:
     """Focus a specific session."""
-    target_session = app.get_session_by_id(session_id)
+    target_session = get_session_by_id(app, session_id)
     if not target_session:
         handle_error(f"Session '{session_id}' not found", 3)
 

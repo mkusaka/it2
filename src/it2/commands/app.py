@@ -5,6 +5,7 @@ import iterm2
 
 from ..core.connection import run_command
 from ..core.errors import handle_error
+from ..core.session_handler import get_session_by_id
 
 # Theme value mapping for PreferenceKey.THEME
 _THEME_MAP = {
@@ -105,7 +106,7 @@ async def broadcast_add(
     # Verify all sessions exist
     sessions = []
     for sid in session_ids:
-        session = app.get_session_by_id(sid)
+        session = get_session_by_id(app, sid)
         if not session:
             handle_error(f"Session '{sid}' not found", 3)
         sessions.append(session)

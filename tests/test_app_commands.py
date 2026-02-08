@@ -314,6 +314,46 @@ def test_app_broadcast_off(
     mock_set_broadcast.assert_called_once()
 
 
+@patch("iterm2.async_set_broadcast_domains", new_callable=AsyncMock)
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
+def test_app_broadcast_add_iterm_session_id(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    mock_set_broadcast,
+    runner,
+    mock_app,
+):
+    """Test app broadcast add accepts ITERM_SESSION_ID format."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    iterm_session_id = f"w0t1p2:{uuid}"
+    target_session = MagicMock()
+    mock_app.get_session_by_id = MagicMock(
+        side_effect=lambda sid: target_session if sid == uuid else None
+    )
+
+    result = runner.invoke(cli, ["app", "broadcast", "add", iterm_session_id])
+    assert result.exit_code == 0, f"Failed with: {result.output}"
+    assert "Created broadcast group with 1 sessions" in result.output
+    mock_app.get_session_by_id.assert_called_once_with(uuid)
+    mock_set_broadcast.assert_called_once()
+
+
 @patch("iterm2.async_get_preference", new_callable=AsyncMock)
 @patch("iterm2.Connection.async_create")
 @patch("iterm2.async_get_app")

@@ -462,6 +462,43 @@ def test_session_focus(
 @patch("iterm2.run_until_complete")
 @patch("os.environ.get")
 @patch("it2.core.connection._connection_manager")
+def test_session_focus_iterm_session_id(
+    mock_conn_mgr,
+    mock_env_get,
+    mock_run_until_complete,
+    mock_async_get_app,
+    mock_async_create,
+    runner,
+    mock_app,
+    mock_session,
+):
+    """Test session focus accepts ITERM_SESSION_ID format."""
+    setup_iterm2_mocks(
+        mock_conn_mgr,
+        mock_env_get,
+        mock_run_until_complete,
+        mock_async_get_app,
+        mock_async_create,
+        mock_app,
+    )
+    uuid = "93DC1CBF-8BA1-48B2-9C6A-834D3AECF340"
+    iterm_session_id = f"w0t1p2:{uuid}"
+    mock_app.get_session_by_id = MagicMock(
+        side_effect=lambda sid: mock_session if sid == uuid else None
+    )
+
+    result = runner.invoke(cli, ["session", "focus", iterm_session_id])
+    assert result.exit_code == 0
+    assert f"Focused session: {iterm_session_id}" in result.output
+    mock_app.get_session_by_id.assert_called_once_with(uuid)
+    mock_session.async_activate.assert_called_once()
+
+
+@patch("iterm2.Connection.async_create")
+@patch("iterm2.async_get_app")
+@patch("iterm2.run_until_complete")
+@patch("os.environ.get")
+@patch("it2.core.connection._connection_manager")
 def test_session_clear(
     mock_conn_mgr,
     mock_env_get,
