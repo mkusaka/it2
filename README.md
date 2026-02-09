@@ -16,7 +16,7 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 ## Requirements
 
 - macOS with iTerm2 3.3.0 or later
-- Python 3.9+
+- Python 3.10+
 - iTerm2 Python API enabled (Preferences > General > Magic > Enable Python API)
 
 ## Installation

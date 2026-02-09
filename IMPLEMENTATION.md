@@ -111,7 +111,7 @@ Implemented command modules:
 
 ### 3. Python Version Compatibility
 **Problem**: Initial Python 3.7 target incompatible with modern tooling.
-**Solution**: Upgraded to Python 3.9+ while maintaining broad compatibility.
+**Solution**: Upgraded to Python 3.10+ while maintaining broad compatibility.
 
 ## Future Enhancements
 
