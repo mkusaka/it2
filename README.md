@@ -27,10 +27,10 @@ A powerful command-line interface for controlling iTerm2 using its Python API.
 pip install it2
 ```
 
-### Using uvx (recommended)
+### Using uv (recommended)
 
 ```bash
-uvx it2
+uv tool install it2
 ```
 
 ## Quick Start
