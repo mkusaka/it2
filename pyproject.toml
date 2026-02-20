@@ -55,7 +55,7 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-timeout>=2.4.0",
     "black>=26.1.0",
-    "ruff>=0.15.0",
+    "ruff>=0.15.2",
     "mypy>=1.19.1",
     "types-PyYAML>=6.0.12.20250915",
     "twine==6.2.0",  # Pin to 6.0.1 to avoid license-file validation issues
