@@ -1,37 +1,33 @@
 name: CI
-
 on:
   push:
   workflow_dispatch:
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           version: "0.10.1"
           enable-cache: true
-      
       - name: Set up Python
         run: uv python install 3.11
-      
       - name: Install dependencies
         run: |
           make install
-      
       - name: Run code quality checks
         run: |
           make lint mypy format-check
-
+    permissions: {}
+    timeout-minutes: 60
   test:
     name: Test Python ${{ matrix.python-version }}
     runs-on: macos-15
@@ -39,61 +35,56 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-    
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           version: "0.10.1"
           enable-cache: true
-      
       - name: Set up Python
         run: uv python install ${{ matrix.python-version }}
-      
       - name: Install dependencies
         run: |
           uv sync --all-extras --dev
-      
       - name: Run tests
         run: |
           make test-cov
-
+    permissions: {}
+    timeout-minutes: 60
   build:
     name: Build Distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           version: "0.10.1"
           enable-cache: true
-      
       - name: Set up Python
         run: uv python install 3.11
-      
       - name: Install dependencies
         run: |
           make install
-      
       - name: Build package
         run: |
           make build
-      
       - name: Check distribution
         run: |
           ls -la dist/
           make check-dist
-      
       - name: Upload artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: dist
           path: dist/
-
+    permissions: {}
+    timeout-minutes: 60
   publish:
     name: Publish to PyPI
     needs: [lint, test, build]
@@ -105,19 +96,17 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/project/it2/
-    
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Download artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: dist
           path: dist/
-      
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-      
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -126,3 +115,5 @@ jobs:
             --verify-tag \
             --generate-notes \
             dist/*
+    timeout-minutes: 60
+permissions: {}
