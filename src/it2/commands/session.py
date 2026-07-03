@@ -180,7 +180,8 @@ async def read(
     contents = await target_session.async_get_screen_contents()
 
     # Extract lines from ScreenContents using line(i).string
-    text_lines = [contents.line(i).string for i in range(contents.number_of_lines)]
+    # Null bytes signify a screen location where a character hasn't been set. Visually they appear blank.
+    text_lines = [contents.line(i).string.replace('\0', ' ') for i in range(contents.number_of_lines)]
 
     if lines is not None:
         # Get last N lines
