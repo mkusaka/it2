@@ -83,7 +83,7 @@ jobs:
           token: ${{ github.token }}
           advanced-security: false
           annotations: true
-          version: v1.25.2 # renovate: depName=zizmorcore/zizmor
+          version: 1.30.0 # renovate: depName=zizmorcore/zizmor
   codeql-actions:
     runs-on: ubuntu-latest
     timeout-minutes: 20
