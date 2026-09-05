@@ -50,16 +50,16 @@ it2 = "it2.cli:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.0.2",
-    "pytest-asyncio>=1.3.0",
-    "pytest-cov>=7.0.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "pytest-timeout>=2.4.0",
-    "black>=26.1.0",
-    "ruff>=0.15.0",
-    "mypy>=1.19.1",
-    "types-PyYAML>=6.0.12.20250915",
+    "black>=26.5.1",
+    "ruff>=0.16.6",
+    "mypy>=1.20.2",
+    "types-PyYAML>=6.0.12.20260815",
     "twine==6.2.0",  # Pin to 6.0.1 to avoid license-file validation issues
-    "build>=1.4.0",
+    "build>=1.6.0",
 ]
 
 [tool.ruff]
