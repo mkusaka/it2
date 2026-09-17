@@ -373,7 +373,7 @@ name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -458,7 +458,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=26.1.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.4.0" },
     { name = "click", specifier = ">=8.3.1" },
-    { name = "iterm2", specifier = ">=2.13" },
+    { name = "iterm2", specifier = ">=2.24" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.3.0" },
@@ -480,15 +480,15 @@ dev = [
 
 [[package]]
 name = "iterm2"
-version = "2.13"
+version = "2.24"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "protobuf" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2b/56/4b11d23db523512eb827ca021b4974885f196ef585b4cd1ba0f17a6996ce/iterm2-2.13.tar.gz", hash = "sha256:bec94392511358d94e7c3f84e31bcc380257cb261856cf7f08a1e4e563d7237e", size = 162970, upload-time = "2025-12-05T19:47:43.01Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/70/25340fae0bd8fa88746d862cb982cf5cdffb25e5952db7601a694f1a9fc5/iterm2-2.24.tar.gz", hash = "sha256:9edd34e32d6ed9fa1851dbe99c4d34f6defe1075763c4409b59b33b21cd71d5d", size = 186638, upload-time = "2026-09-17T17:18:34.463Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/10/61d5af7686135a30566de74675b4a2c2626f02d1f529c00c881347f04dc1/iterm2-2.13-py3-none-any.whl", hash = "sha256:164fab5e3d42ab3792d259462aa2bf2d9558f0b762cf7321549da22aee4276cf", size = 177246, upload-time = "2025-12-05T19:47:41.927Z" },
+    { url = "https://files.pythonhosted.org/packages/89/a5/e9738845c29e72eeee6db5d1872713fab380313b0ebfaa3d1d6868c99229/iterm2-2.24-py3-none-any.whl", hash = "sha256:efe7045e7c063c851a1c95d023047437dff7227d299a97794d701b9f43eafe88", size = 193510, upload-time = "2026-09-17T17:18:33.289Z" },
 ]
 
 [[package]]
