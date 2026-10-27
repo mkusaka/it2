@@ -13,9 +13,12 @@ on:
       - reopened
       - synchronize
   workflow_dispatch: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions: {}
 jobs:
-  actionlint:
+  jactionlint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
@@ -23,21 +26,22 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Download actionlint
-        id: get_actionlint
+      - name: Download jactionlint
         env:
-          # renovate: datasource=github-releases depName=rhysd/actionlint
-          ACTIONLINT_VERSION: v1.7.12
+          # renovate: datasource=github-releases depName=jdx/jactionlint
+          JACTIONLINT_VERSION: v2.3.0
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/download-actionlint.bash "https://raw.githubusercontent.com/rhysd/actionlint/$ACTIONLINT_VERSION/scripts/download-actionlint.bash"
-          bash /tmp/download-actionlint.bash "${ACTIONLINT_VERSION#v}"
+          archive="jactionlint_${JACTIONLINT_VERSION#v}_linux_amd64.tar.gz"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o "/tmp/$archive" "https://github.com/jdx/jactionlint/releases/download/$JACTIONLINT_VERSION/$archive"
+          curl -sSfL -H "Authorization: token $GITHUB_TOKEN" -o /tmp/jactionlint_checksums.txt "https://github.com/jdx/jactionlint/releases/download/$JACTIONLINT_VERSION/jactionlint_${JACTIONLINT_VERSION#v}_checksums.txt"
+          (cd /tmp && grep "  $archive\$" jactionlint_checksums.txt | sha256sum -c -)
+          tar -xzf "/tmp/$archive" -C /tmp jactionlint
+          sudo install -m 0755 /tmp/jactionlint /usr/local/bin/jactionlint
+          jactionlint --version
         shell: bash
       - name: Check workflow files
-        env:
-          ACTIONLINT_EXECUTABLE: ${{ steps.get_actionlint.outputs.executable }}
-        run: |
-          "$ACTIONLINT_EXECUTABLE" -color
+        run: jactionlint --color
         shell: bash
   ghalint:
     runs-on: ubuntu-latest
