@@ -159,7 +159,7 @@ jobs:
       - name: Download pinact
         env:
           # renovate: datasource=github-releases depName=suzuki-shunsuke/pinact
-          PINACT_VERSION: v3.10.1
+          PINACT_VERSION: v4.1.1
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           archive="pinact_linux_amd64.tar.gz"
@@ -171,5 +171,7 @@ jobs:
           pinact version
         shell: bash
       - name: Check pinned action refs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: pinact run --check
         shell: bash
